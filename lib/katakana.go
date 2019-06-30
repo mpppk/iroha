@@ -10,6 +10,10 @@ func (w WordBits) has(katakanaBits KatakanaBits) bool {
 	return w&WordBits(katakanaBits) != 0
 }
 
+func (w WordBits) hasDuplicatedKatakana(otherWordBits WordBits) bool {
+	return w&otherWordBits != 0
+}
+
 type KatakanaBits uint64
 type KatakanaBitsMap map[rune]KatakanaBits
 type WordBitsMap map[KatakanaBits][]WordBits
@@ -17,6 +21,10 @@ type WordCountMap map[KatakanaBits]int
 type KatakanaCount struct {
 	katakanaBits KatakanaBits
 	count        int
+}
+type KatakanaAndWordBits struct {
+	KatakanaBits KatakanaBits
+	WordBitsList []WordBits
 }
 
 func (w WordCountMap) toSortedKatakanaBitsList() (katakanaBits []KatakanaBits) {
@@ -64,6 +72,17 @@ func NewKatakana(words []string) *Katakana {
 	katakana.wordCountMap = wordCountMap
 	katakana.wordBitsMap = katakana.createWordBitsMap(wordBitsList)
 	return katakana
+}
+
+func (k *Katakana) ListSortedKatakanaAndWordBits() (katakanaAndWordBitsList []*KatakanaAndWordBits) {
+	katakanaBitsList := k.wordCountMap.toSortedKatakanaBitsList()
+	for _, katakanaBits := range katakanaBitsList {
+		katakanaAndWordBitsList = append(katakanaAndWordBitsList, &KatakanaAndWordBits{
+			KatakanaBits: katakanaBits,
+			WordBitsList: k.wordBitsMap[katakanaBits],
+		})
+	}
+	return katakanaAndWordBitsList
 }
 
 func (k *Katakana) loadWords(words []string) (wordBits []WordBits) {
