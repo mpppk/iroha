@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -26,17 +27,25 @@ func TestNewKatakana(t *testing.T) {
 					katakanaBitsMap['ウ']: 2,
 					katakanaBitsMap['エ']: 1,
 				},
+				wordBitsMap: WordBitsMap{
+					katakanaBitsMap['ア']: []WordBits{
+						toWordBits(katakanaBitsMap, "アイウ"),
+					},
+					katakanaBitsMap['エ']: []WordBits{
+						toWordBits(katakanaBitsMap, "イウエ"),
+					},
+				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			katakana := NewKatakana(tt.args.words)
-			for katakanaBits, count := range katakana.wordCountMap {
-				expectedCount := tt.want.wordCountMap[katakanaBits]
-				if expectedCount != count {
-					t.Errorf("NewKatakana.wordCountMap[%v] = %v, want %v", katakanaBits, count, expectedCount)
-				}
+			if !reflect.DeepEqual(katakana.wordCountMap, tt.want.wordCountMap) {
+				t.Errorf("wordCountMap() = %v, want %v", katakana.wordCountMap, tt.want.wordCountMap)
+			}
+			if !reflect.DeepEqual(katakana.wordBitsMap, tt.want.wordBitsMap) {
+				t.Errorf("wordBitsMap() = %v, want %v", katakana.wordBitsMap, tt.want.wordBitsMap)
 			}
 		})
 	}
