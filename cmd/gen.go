@@ -2,21 +2,28 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+var fileFlagKey = "file"
 
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "generate iroha",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		words, err := lib.ReadCSV("pokemon_list.csv")
-		//words, err := lib.ReadCSV("pokemon_list_medium_mod.csv")
-		//words, err := lib.ReadCSV("pokemon_list_small_mod.csv")
+		filePath := viper.GetString(fileFlagKey)
+		if filePath == "" {
+			FprintlnOrPanic(os.Stderr, "CSV file path should be specified by --file flag")
+			os.Exit(1)
+		}
+		words, err := lib.ReadCSV(filePath)
 		if err != nil {
 			panic(err)
 		}
@@ -25,13 +32,25 @@ var genCmd = &cobra.Command{
 		irohaWordsList := iroha.Search()
 		for _, irohaWords := range irohaWordsList {
 			if ok, _ := IsValidIroha(irohaWords); !ok {
-				fmt.Fprintln(os.Stderr, "invalid result is returned", irohaWords)
+				FprintlnOrPanic(os.Stderr, "invalid result is returned", irohaWords)
 				os.Exit(1)
 			}
-			fmt.Println(irohaWords)
+			fmt.Println(strings.Join(irohaWords, ","))
 		}
-		fmt.Println(len(irohaWordsList))
+		FprintfOrPanic(os.Stderr, "%d iroha-uta were found!", len(irohaWordsList))
 	},
+}
+
+func FprintlnOrPanic(w io.Writer, a ...interface{}) {
+	if _, err := fmt.Fprintln(w, a...); err != nil {
+		panic(err)
+	}
+}
+
+func FprintfOrPanic(w io.Writer, format string, a ...interface{}) {
+	if _, err := fmt.Fprintf(w, format, a...); err != nil {
+		panic(err)
+	}
 }
 
 func IsValidIroha(words []string) (bool, string) {
@@ -52,4 +71,8 @@ func IsValidIroha(words []string) (bool, string) {
 
 func init() {
 	rootCmd.AddCommand(genCmd)
+	genCmd.Flags().StringP(fileFlagKey, "f", "", "csv file path")
+	if err := viper.BindPFlag(fileFlagKey, genCmd.Flags().Lookup(fileFlagKey)); err != nil {
+		panic(err)
+	}
 }
