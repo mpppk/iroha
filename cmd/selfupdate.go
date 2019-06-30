@@ -1,15 +1,16 @@
 package cmd
 
 import (
-	"github.com/mpppk/cli-template/lib"
-	"github.com/spf13/cobra"
 	"log"
+
+	"github.com/mpppk/iroha/lib"
+	"github.com/spf13/cobra"
 )
 
 var selfUpdateCmd = &cobra.Command{
 	Use:   "selfupdate",
-	Short: "update cli-template",
-	//Long: `Update cli-template`,
+	Short: "update iroha",
+	//Long: `Update iroha`,
 	Run: func(cmd *cobra.Command, args []string) {
 		updated, err := lib.DoSelfUpdate()
 		if err != nil {

@@ -6,8 +6,8 @@ import (
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 )
 
-const Version = "1.2.3"
-const slug = "mpppk/cli-template"
+const Version = "0.0.1"
+const slug = "mpppk/iroha"
 
 func DoSelfUpdate() (bool, error) {
 	v := semver.MustParse(Version)

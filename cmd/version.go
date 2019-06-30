@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/mpppk/cli-template/lib"
+
+	"github.com/mpppk/iroha/lib"
 
 	"github.com/spf13/cobra"
 )
