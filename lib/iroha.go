@@ -1,7 +1,6 @@
 package lib
 
 import (
-	"fmt"
 	"math/bits"
 )
 
@@ -17,42 +16,49 @@ func NewIroha(words []string) *Iroha {
 	}
 }
 
-func (i *Iroha) Search() {
+func (i *Iroha) Search() (wordStringsList [][]string) {
 	katakanaAndWordBitsList := i.katakana.ListSortedKatakanaAndWordBits()
-	res, _ := i.searchByBits(katakanaAndWordBitsList, WordBits(0))
-	fmt.Println(len(res))
+	wordsList, _ := i.searchByBits(katakanaAndWordBitsList, WordBits(0))
+	for _, words := range wordsList {
+		var wordStrings []string
+		for _, word := range words {
+			wordStrings = append(wordStrings, i.katakana.ToWord(word.Id))
+		}
+		wordStringsList = append(wordStringsList, wordStrings)
+	}
+	return
 }
 
-func (i *Iroha) searchByBits(katakanaAndWordBitsList []*KatakanaAndWordBits, remainKatakanaBits WordBits) ([][]WordBits, bool) {
-	if bits.OnesCount64(uint64(remainKatakanaBits)) == int(katakanaLen) {
-		return [][]WordBits{{}}, true
+func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool) {
+	if bits.OnesCount64(uint64(remainKatakanaBits)) == int(KatakanaLen) {
+		return [][]*Word{{}}, true
 	}
 
-	if len(katakanaAndWordBitsList) == 0 {
+	if len(katakanaBitsAndWords) == 0 {
 		return nil, false
 	}
 
-	katakanaAndWordBits := katakanaAndWordBitsList[0]
-	var irohaWordBitsLists [][]WordBits
-	for _, wordBits := range katakanaAndWordBits.WordBitsList {
-		if remainKatakanaBits.HasDuplicatedKatakana(wordBits) {
+	katakanaAndWordBits := katakanaBitsAndWords[0]
+	var irohaWordLists [][]*Word
+	for _, word := range katakanaAndWordBits.Words {
+		if remainKatakanaBits.HasDuplicatedKatakana(word.Bits) {
 			continue
 		}
-		newRemainKatakanaBits := remainKatakanaBits.Merge(wordBits)
-		if newIrohaWordBitsLists, ok := i.searchByBits(katakanaAndWordBitsList[1:], newRemainKatakanaBits); ok {
-			for _, newIrohaWordBitsList := range newIrohaWordBitsLists {
-				newIrohaWordBitsList = append(newIrohaWordBitsList, wordBits)
-				irohaWordBitsLists = append(irohaWordBitsLists, newIrohaWordBitsList)
+		newRemainKatakanaBits := remainKatakanaBits.Merge(word.Bits)
+		if newIrohaWordIdLists, ok := i.searchByBits(katakanaBitsAndWords[1:], newRemainKatakanaBits); ok {
+			for _, newIrohaWordList := range newIrohaWordIdLists {
+				newIrohaWordList = append(newIrohaWordList, word)
+				irohaWordLists = append(irohaWordLists, newIrohaWordList)
 			}
 		}
 	}
 
 	// どれも入れない場合
 	if remainKatakanaBits.has(katakanaAndWordBits.KatakanaBits) {
-		if otherIrohaWordBitsLists, ok := i.searchByBits(katakanaAndWordBitsList[1:], remainKatakanaBits); ok {
-			irohaWordBitsLists = append(irohaWordBitsLists, otherIrohaWordBitsLists...)
+		if otherIrohaWordBitsLists, ok := i.searchByBits(katakanaBitsAndWords[1:], remainKatakanaBits); ok {
+			irohaWordLists = append(irohaWordLists, otherIrohaWordBitsLists...)
 		}
 	}
 
-	return irohaWordBitsLists, len(irohaWordBitsLists) > 0
+	return irohaWordLists, len(irohaWordLists) > 0
 }

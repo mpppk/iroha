@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"fmt"
+	"os"
+	"strings"
+
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
 )
@@ -17,22 +21,35 @@ var genCmd = &cobra.Command{
 			panic(err)
 		}
 
-		normalizedWords := lib.NormalizeKatakanaWords(words)
-		iroha := lib.NewIroha(normalizedWords)
-		iroha.Search()
+		iroha := lib.NewIroha(words)
+		irohaWordsList := iroha.Search()
+		for _, irohaWords := range irohaWordsList {
+			if ok, _ := IsValidIroha(irohaWords); !ok {
+				fmt.Fprintln(os.Stderr, "invalid result is returned", irohaWords)
+				os.Exit(1)
+			}
+			fmt.Println(irohaWords)
+		}
+		fmt.Println(len(irohaWordsList))
 	},
+}
+
+func IsValidIroha(words []string) (bool, string) {
+	concatenatedWord := strings.Join(words, "")
+	n := lib.NormalizeKatakanaWord(concatenatedWord)
+	runes := []rune(n)
+
+	if len(runes) != int(lib.KatakanaLen) {
+		return false, n
+	}
+
+	if lib.HasDuplicatedRune(n) {
+		return false, n
+	}
+
+	return true, n
 }
 
 func init() {
 	rootCmd.AddCommand(genCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// genCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// genCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
