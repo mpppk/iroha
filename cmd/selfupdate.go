@@ -9,7 +9,7 @@ import (
 
 var selfUpdateCmd = &cobra.Command{
 	Use:   "selfupdate",
-	Short: "update iroha",
+	Short: "Update iroha",
 	//Long: `Update iroha`,
 	Run: func(cmd *cobra.Command, args []string) {
 		updated, err := lib.DoSelfUpdate()

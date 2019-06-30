@@ -10,7 +10,7 @@ $ go get github.com/mpppk/iroha
 # Usage
 
 ```shell
-$ iroha --file word_list.csv
+$ iroha gen --file word_list.csv
 word1,word2, ... ,wordN
 .
 .

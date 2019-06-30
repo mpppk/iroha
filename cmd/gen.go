@@ -15,7 +15,7 @@ var fileFlagKey = "file"
 
 var genCmd = &cobra.Command{
 	Use:   "gen",
-	Short: "generate iroha",
+	Short: "Generate iroha-uta",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		filePath := viper.GetString(fileFlagKey)
@@ -71,7 +71,7 @@ func IsValidIroha(words []string) (bool, string) {
 
 func init() {
 	rootCmd.AddCommand(genCmd)
-	genCmd.Flags().StringP(fileFlagKey, "f", "", "csv file path")
+	genCmd.Flags().StringP(fileFlagKey, "f", "", "CSV file path")
 	if err := viper.BindPFlag(fileFlagKey, genCmd.Flags().Lookup(fileFlagKey)); err != nil {
 		panic(err)
 	}
