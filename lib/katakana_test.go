@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewKatakana(t *testing.T) {
-	katakanaBitsMap := newKatakanaBitMap()
+	katakanaBitsMap := newKatakanaBitsMap()
 	type args struct {
 		words []string
 	}
@@ -54,7 +54,7 @@ func TestNewKatakana(t *testing.T) {
 }
 
 func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
-	katakanaBitsMap := newKatakanaBitMap()
+	katakanaBitsMap := newKatakanaBitsMap()
 	type fields struct {
 		katakanaBitsMap KatakanaBitsMap
 		wordBitsMap     WordBitsMap

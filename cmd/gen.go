@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
 )
@@ -12,14 +10,16 @@ var genCmd = &cobra.Command{
 	Short: "generate iroha",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		words, err := lib.ReadCSV("pokemon_list_medium.csv")
-		//words, err := lib.ReadCSV("pokemon_list_small.csv")
+		words, err := lib.ReadCSV("pokemon_list.csv")
+		//words, err := lib.ReadCSV("pokemon_list_medium_mod.csv")
+		//words, err := lib.ReadCSV("pokemon_list_small_mod.csv")
 		if err != nil {
 			panic(err)
 		}
+
 		normalizedWords := lib.NormalizeKatakanaWords(words)
-		results := lib.CanUseIroha(normalizedWords, lib.NewIroha(), lib.IrohaCache{})
-		fmt.Println(results)
+		iroha := lib.NewIroha(normalizedWords)
+		iroha.Search()
 	},
 }
 
