@@ -72,7 +72,12 @@ func (w WordCountMap) toSortedKatakanaBitsList() (katakanaBits []KatakanaBits) {
 func (w WordCountMap) toSortedList() []*KatakanaCount {
 	katakanaBitsCounts := w.toList()
 	sort.Slice(katakanaBitsCounts, func(i, j int) bool {
-		return katakanaBitsCounts[i].count < katakanaBitsCounts[j].count
+		a := katakanaBitsCounts[i]
+		b := katakanaBitsCounts[j]
+		if a.count == b.count {
+			return a.katakanaBits < b.katakanaBits
+		}
+		return a.count < b.count
 	})
 	return katakanaBitsCounts
 }
