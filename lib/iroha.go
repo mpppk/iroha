@@ -10,15 +10,24 @@ type Iroha struct {
 }
 
 func NewIroha(words []string) *Iroha {
+	km, _ := newKatakanaBitsMap()
 	return &Iroha{
-		katakanaBitsMap: newKatakanaBitsMap(),
+		katakanaBitsMap: km,
 		katakana:        NewKatakana(words),
 	}
 }
 
+func (i *Iroha) PrintWordCountMap() {
+	i.katakana.PrintWordCountMap()
+}
+
+func (i *Iroha) PrintWordByKatakanaMap() {
+	i.katakana.PrintWordByKatakanaMap()
+}
+
 func (i *Iroha) Search() (wordStringsList [][]string) {
-	katakanaAndWordBitsList := i.katakana.ListSortedKatakanaAndWordBits()
-	wordsList, _ := i.searchByBits(katakanaAndWordBitsList, WordBits(0))
+	katakanaBitsAndWordsList := i.katakana.ListSortedKatakanaBitsAndWords()
+	wordsList, _ := i.searchByBits(katakanaBitsAndWordsList, WordBits(0))
 	for _, words := range wordsList {
 		var wordStrings []string
 		for _, word := range words {

@@ -8,7 +8,7 @@ import (
 )
 
 func TestNewKatakana(t *testing.T) {
-	katakanaBitsMap := newKatakanaBitsMap()
+	katakanaBitsMap, _ := newKatakanaBitsMap()
 	type args struct {
 		words []string
 	}
@@ -30,31 +30,53 @@ func TestNewKatakana(t *testing.T) {
 					katakanaBitsMap['エ']: 1,
 				},
 				wordByKatakanaMap: WordByKatakanaMap{
-					katakanaBitsMap['ア']: []WordBits{
-						toWordBits(katakanaBitsMap, "アイウ"),
+					katakanaBitsMap['ア']: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "アイウ"),
+						},
 					},
-					katakanaBitsMap['エ']: []WordBits{
-						toWordBits(katakanaBitsMap, "イウエ"),
+					katakanaBitsMap['エ']: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "イウエ"),
+						},
 					},
 				},
 			},
 		},
 	}
+
+	contains := func(wordByKatakanaMap WordByKatakanaMap, targetKatakanaBits KatakanaBits, targetWordBits WordBits) bool {
+		for katakanaBits, words := range wordByKatakanaMap {
+			if katakanaBits == targetKatakanaBits {
+				for _, word := range words {
+					if word.Bits == targetWordBits {
+						return true
+					}
+				}
+			}
+		}
+		return false
+	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			katakana := NewKatakana(tt.args.words)
 			if !reflect.DeepEqual(katakana.wordCountMap, tt.want.wordCountMap) {
 				t.Errorf("wordCountMap() = %v, want %v", katakana.wordCountMap, tt.want.wordCountMap)
 			}
-			if !reflect.DeepEqual(katakana.wordByKatakanaMap, tt.want.wordByKatakanaMap) {
-				t.Errorf("wordByKatakanaMap() = %v, want %v", katakana.wordByKatakanaMap, tt.want.wordByKatakanaMap)
+			for katakanaBits, words := range tt.want.wordByKatakanaMap {
+				for _, word := range words {
+					if !contains(katakana.wordByKatakanaMap, katakanaBits, word.Bits) {
+						t.Errorf("wordByKatakanaMap() = %v, want %v", katakana.wordByKatakanaMap, tt.want.wordByKatakanaMap)
+					}
+				}
 			}
 		})
 	}
 }
 
 func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
-	katakanaBitsMap := newKatakanaBitsMap()
+	katakanaBitsMap, _ := newKatakanaBitsMap()
 	type fields struct {
 		katakanaBitsMap KatakanaBitsMap
 		wordBitsMap     WordByKatakanaMap
@@ -75,11 +97,15 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 					katakanaBitsMap['エ']: 1,
 				},
 				wordBitsMap: WordByKatakanaMap{
-					katakanaBitsMap['ア']: []WordBits{
-						toWordBits(katakanaBitsMap, "アイウ"),
+					katakanaBitsMap['ア']: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "アイウ"),
+						},
 					},
-					katakanaBitsMap['エ']: []WordBits{
-						toWordBits(katakanaBitsMap, "イウエ"),
+					katakanaBitsMap['エ']: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "イウエ"),
+						},
 					},
 				},
 				katakanaBitsMap: katakanaBitsMap,
@@ -87,23 +113,27 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 			wantKatakanaAndWordBitsList: []*KatakanaBitsAndWords{
 				{
 					KatakanaBits: katakanaBitsMap['ア'],
-					WordBitsList: []WordBits{
-						toWordBits(katakanaBitsMap, "アイウ"),
+					Words: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "アイウ"),
+						},
 					},
 				},
 				{
 					KatakanaBits: katakanaBitsMap['エ'],
-					WordBitsList: []WordBits{
-						toWordBits(katakanaBitsMap, "イウエ"),
+					Words: []*Word{
+						{
+							Bits: toWordBits(katakanaBitsMap, "イウエ"),
+						},
 					},
 				},
 				{
 					KatakanaBits: katakanaBitsMap['イ'],
-					WordBitsList: []WordBits{},
+					Words:        []*Word{},
 				},
 				{
 					KatakanaBits: katakanaBitsMap['ウ'],
-					WordBitsList: []WordBits{},
+					Words:        []*Word{},
 				},
 			},
 		},
@@ -113,7 +143,7 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 		for _, nv := range list {
 			if nv.KatakanaBits == v.KatakanaBits {
 				// FIXME
-				if len(v.WordBitsList) == 0 && len(nv.WordBitsList) == 0 {
+				if len(v.Words) == 0 && len(nv.Words) == 0 {
 					return true
 				}
 				return reflect.DeepEqual(*nv, *v)
@@ -130,7 +160,7 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 				wordCountMap:      tt.fields.wordCountMap,
 			}
 
-			gotKatakanaAndWordBitsList := k.ListSortedKatakanaAndWordBits()
+			gotKatakanaAndWordBitsList := k.ListSortedKatakanaBitsAndWords()
 			for _, want := range tt.wantKatakanaAndWordBitsList {
 				if !contains(gotKatakanaAndWordBitsList, want) {
 					pp.Println(gotKatakanaAndWordBitsList)

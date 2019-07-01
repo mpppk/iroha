@@ -29,6 +29,8 @@ var genCmd = &cobra.Command{
 		}
 
 		iroha := lib.NewIroha(words)
+		//iroha.PrintWordCountMap()
+		//iroha.PrintWordByKatakanaMap()
 		irohaWordsList := iroha.Search()
 		for _, irohaWords := range irohaWordsList {
 			if ok, _ := IsValidIroha(irohaWords); !ok {
