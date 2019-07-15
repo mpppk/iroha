@@ -49,7 +49,10 @@ var genCmd = &cobra.Command{
 		//iroha.PrintWordCountMap()
 		//iroha.PrintWordByKatakanaMap()
 		log.Print("start searching...")
-		rowIndicesList := iroha.Search()
+		rowIndicesList, err := iroha.Search()
+		if err != nil {
+			panic(err)
+		}
 
 		for _, rowIndices := range rowIndicesList {
 			for _, rowIndex := range rowIndices {
