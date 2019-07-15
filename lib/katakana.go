@@ -272,12 +272,15 @@ func newNormalizeKatakanaMap() map[rune]rune {
 }
 
 func NormalizeAndFilterKatakanaWords(words []string) (normalizedWords, orgWords []string, wordIds []WordId) {
+	wordMap := map[string]struct{}{}
 	for wordId, word := range words {
 		normalizedWord := NormalizeKatakanaWord(word)
-		if !HasDuplicatedRune(normalizedWord) {
+		_, ok := wordMap[word]
+		if !HasDuplicatedRune(normalizedWord) && !ok {
 			normalizedWords = append(normalizedWords, normalizedWord)
 			orgWords = append(orgWords, word)
 			wordIds = append(wordIds, WordId(wordId))
+			wordMap[word] = struct{}{}
 		}
 	}
 	return
