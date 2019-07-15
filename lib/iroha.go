@@ -25,15 +25,15 @@ func (i *Iroha) PrintWordByKatakanaMap() {
 	i.katakana.PrintWordByKatakanaMap()
 }
 
-func (i *Iroha) Search() (wordStringsList [][]string) {
+func (i *Iroha) Search() (rowIndicesList [][]int) {
 	katakanaBitsAndWordsList := i.katakana.ListSortedKatakanaBitsAndWords()
 	wordsList, _ := i.searchByBits(katakanaBitsAndWordsList, WordBits(0))
 	for _, words := range wordsList {
-		var wordStrings []string
+		var rowIndices []int
 		for _, word := range words {
-			wordStrings = append(wordStrings, i.katakana.ToWord(word.Id))
+			rowIndices = append(rowIndices, int(word.Id))
 		}
-		wordStringsList = append(wordStringsList, wordStrings)
+		rowIndicesList = append(rowIndicesList, rowIndices)
 	}
 	return
 }

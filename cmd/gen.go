@@ -31,15 +31,14 @@ var genCmd = &cobra.Command{
 		iroha := lib.NewIroha(words)
 		//iroha.PrintWordCountMap()
 		//iroha.PrintWordByKatakanaMap()
-		irohaWordsList := iroha.Search()
-		for _, irohaWords := range irohaWordsList {
-			if ok, _ := IsValidIroha(irohaWords); !ok {
-				FprintlnOrPanic(os.Stderr, "invalid result is returned", irohaWords)
-				os.Exit(1)
+		rowIndicesList := iroha.Search()
+		for _, rowIndices := range rowIndicesList {
+			for _, rowIndex := range rowIndices {
+				fmt.Println(words[rowIndex])
 			}
-			fmt.Println(strings.Join(irohaWords, ","))
+			fmt.Print("\n----------\n\n")
 		}
-		FprintfOrPanic(os.Stderr, "%d iroha-uta were found!", len(irohaWordsList))
+		FprintfOrPanic(os.Stderr, "%d iroha-uta were found!", len(rowIndicesList))
 	},
 }
 
