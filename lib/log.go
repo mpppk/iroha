@@ -2,6 +2,7 @@ package lib
 
 import (
 	"log"
+	"runtime"
 )
 
 type Log struct {
@@ -48,23 +49,29 @@ func (l *Log) getProgress(depth int) float64 {
 	return (cur / max) * 100
 }
 
-func (l *Log) PrintProgressLog(depth, current int, sec float64) {
-	log.Printf("depth: %v %v/%v, take %.2f sec. %f%s",
+func (l *Log) PrintProgressLog(depth, current int, sec float64, msg string) {
+	l.updateProgress(depth, current)
+	m := ""
+	if msg != "" {
+		m = " (" + msg + ")"
+	}
+	percents := make([]int, len(l.curs), len(l.curs))
+	for i, cur := range l.curs {
+		if l.counts[i] == 0 {
+			percents[i] = 0
+			continue
+		}
+		percents[i] = int((float64(cur) / float64(l.counts[i])) * 100)
+	}
+	log.Printf("d:%02v %04v/%04v %05.2fsec %03.6f%s gr=%06d %02d%s",
 		depth,
 		current,
 		l.counts[depth],
 		sec,
 		l.getProgress(depth),
 		"%",
+		runtime.NumGoroutine(),
+		percents,
+		m,
 	)
-	l.updateProgress(depth, current)
-	percents := make([]float64, len(l.curs), len(l.curs))
-	for i, cur := range l.curs {
-		if l.counts[i] == 0 {
-			percents[i] = 0
-			continue
-		}
-		percents[i] = (float64(cur) / float64(l.counts[i])) * 100
-	}
-	log.Printf("percents: %.2v", percents)
 }

@@ -1,8 +1,14 @@
 package lib
 
 import (
+	"fmt"
 	"math/bits"
+
+	"golang.org/x/sync/errgroup"
 )
+
+var logThresholdSec = 3.0
+var goroutineThresholdSec = 1.0
 
 type Iroha struct {
 	katakanaBitsMap KatakanaBitsMap
@@ -56,10 +62,15 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 	katakanaAndWordBits := katakanaBitsAndWords[0]
 	depth := int(KatakanaLen) - len(katakanaBitsAndWords)
 	var irohaWordLists [][]*Word
-	for cur, word := range katakanaAndWordBits.Words {
-		measurer := NewTimeMeasurerAndStart()
+
+	if len(katakanaAndWordBits.Words) == 0 {
+		return irohaWordLists, len(irohaWordLists) > 0, nil
+	}
+
+	f := func(word *Word) ([][]*Word, bool, error) {
+		var results [][]*Word
 		if remainKatakanaBits.HasDuplicatedKatakana(word.Bits) {
-			continue
+			return nil, false, nil
 		}
 		newRemainKatakanaBits := remainKatakanaBits.Merge(word.Bits)
 		newIrohaWordIdLists, ok, err := i.searchByBits(katakanaBitsAndWords[1:], newRemainKatakanaBits)
@@ -69,11 +80,86 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		if ok {
 			for _, newIrohaWordList := range newIrohaWordIdLists {
 				newIrohaWordList = append(newIrohaWordList, word)
-				irohaWordLists = append(irohaWordLists, newIrohaWordList)
+				results = append(results, newIrohaWordList)
 			}
 		}
-		if t := measurer.GetElapsedTimeSec(); t > 5 {
-			i.log.PrintProgressLog(depth, cur, t)
+		return results, true, nil
+	}
+
+	gf := func(word *Word, wordListChan chan<- []*Word) error {
+		wordLists, ok, err := f(word)
+		if err != nil {
+			return err
+		}
+		if ok {
+			for _, wordList := range wordLists {
+				wordListChan <- wordList
+			}
+		}
+		return nil
+	}
+
+	goroutineMode := false
+	eg := errgroup.Group{}
+	wordListChan := make(chan []*Word, 100)
+	for cur, word := range katakanaAndWordBits.Words {
+		if goroutineMode {
+			gCur := cur
+			gWord := word
+			gDepth := depth
+			eg.Go(func() error {
+				measurer := NewTimeMeasurerAndStart()
+				if err := gf(gWord, wordListChan); err != nil {
+					return err
+				}
+				if t := measurer.GetElapsedTimeSec(); t > logThresholdSec {
+					i.log.PrintProgressLog(gDepth, gCur, t, "")
+				}
+				return nil
+			})
+		} else {
+			measurer := NewTimeMeasurerAndStart()
+			wordList, ok, err := f(word)
+			if err != nil {
+				return nil, false, err
+			}
+			if ok {
+				irohaWordLists = append(irohaWordLists, wordList...)
+			}
+			t := measurer.GetElapsedTimeSec()
+			if t > logThresholdSec {
+				i.log.PrintProgressLog(depth, cur, t, "")
+			}
+			if t > goroutineThresholdSec {
+				goroutineMode = true
+			}
+
+		}
+
+	}
+
+	errChan := make(chan error)
+	go func() {
+		if err := eg.Wait(); err != nil {
+			errChan <- err
+			return
+		}
+		close(wordListChan)
+	}()
+
+L:
+	for {
+		select {
+		case wordList, ok := <-wordListChan:
+			if !ok {
+				break L
+			}
+			irohaWordLists = append(irohaWordLists, wordList)
+		case err, ok := <-errChan:
+			if !ok {
+				return nil, false, fmt.Errorf("unexpected error channel closing")
+			}
+			return nil, false, err
 		}
 	}
 
