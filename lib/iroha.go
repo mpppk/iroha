@@ -50,6 +50,38 @@ func (i *Iroha) Search() (rowIndicesList [][]int, err error) {
 	return
 }
 
+func (i *Iroha) f(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
+	var results [][]*Word
+	if remainKatakanaBits.HasDuplicatedKatakana(word.Bits) {
+		return nil, false, nil
+	}
+	newRemainKatakanaBits := remainKatakanaBits.Merge(word.Bits)
+	newIrohaWordIdLists, ok, err := i.searchByBits(katakanaBitsAndWords[1:], newRemainKatakanaBits)
+	if err != nil {
+		return nil, false, err
+	}
+	if ok {
+		for _, newIrohaWordList := range newIrohaWordIdLists {
+			newIrohaWordList = append(newIrohaWordList, word)
+			results = append(results, newIrohaWordList)
+		}
+	}
+	return results, true, nil
+}
+
+func (i *Iroha) gf(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits, wordListChan chan<- []*Word) error {
+	wordLists, ok, err := i.f(word, katakanaBitsAndWords, remainKatakanaBits)
+	if err != nil {
+		return err
+	}
+	if ok {
+		for _, wordList := range wordLists {
+			wordListChan <- wordList
+		}
+	}
+	return nil
+}
+
 func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
 	remainKatakanaNum := bits.OnesCount64(uint64(remainKatakanaBits))
 	if remainKatakanaNum == int(KatakanaLen) {
@@ -61,44 +93,12 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 	}
 
 	katakanaAndWordBits := katakanaBitsAndWords[0]
+	if len(katakanaAndWordBits.Words) == 0 {
+		return nil, false, nil
+	}
+
 	depth := int(KatakanaLen) - len(katakanaBitsAndWords)
 	var irohaWordLists [][]*Word
-
-	if len(katakanaAndWordBits.Words) == 0 {
-		return irohaWordLists, len(irohaWordLists) > 0, nil
-	}
-
-	f := func(word *Word) ([][]*Word, bool, error) {
-		var results [][]*Word
-		if remainKatakanaBits.HasDuplicatedKatakana(word.Bits) {
-			return nil, false, nil
-		}
-		newRemainKatakanaBits := remainKatakanaBits.Merge(word.Bits)
-		newIrohaWordIdLists, ok, err := i.searchByBits(katakanaBitsAndWords[1:], newRemainKatakanaBits)
-		if err != nil {
-			return nil, false, err
-		}
-		if ok {
-			for _, newIrohaWordList := range newIrohaWordIdLists {
-				newIrohaWordList = append(newIrohaWordList, word)
-				results = append(results, newIrohaWordList)
-			}
-		}
-		return results, true, nil
-	}
-
-	gf := func(word *Word, wordListChan chan<- []*Word) error {
-		wordLists, ok, err := f(word)
-		if err != nil {
-			return err
-		}
-		if ok {
-			for _, wordList := range wordLists {
-				wordListChan <- wordList
-			}
-		}
-		return nil
-	}
 
 	goroutineMode := depth >= minParallelDepth && depth <= maxParallelDepth
 
@@ -107,14 +107,11 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		wordListChan := make(chan []*Word, 100)
 		for _, word := range katakanaAndWordBits.Words {
 			gWord := word
-			gDepth := depth
 			eg.Go(func() error {
-				measurer := NewTimeMeasurerAndStart()
-				if err := gf(gWord, wordListChan); err != nil {
+				if err := i.gf(gWord, katakanaBitsAndWords, remainKatakanaBits, wordListChan); err != nil {
 					return err
 				}
-				t := measurer.GetElapsedTimeSec()
-				i.log.PrintProgressLog(gDepth, t, "")
+				i.log.PrintProgressLog(depth, "")
 				return nil
 			})
 		}
@@ -144,16 +141,14 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		}
 	} else {
 		for _, word := range katakanaAndWordBits.Words {
-			measurer := NewTimeMeasurerAndStart()
-			wordList, ok, err := f(word)
+			wordList, ok, err := i.f(word, katakanaBitsAndWords, remainKatakanaBits)
 			if err != nil {
 				return nil, false, err
 			}
 			if ok {
 				irohaWordLists = append(irohaWordLists, wordList...)
 			}
-			t := measurer.GetElapsedTimeSec()
-			i.log.PrintProgressLog(depth, t, "")
+			i.log.PrintProgressLog(depth, "")
 		}
 	}
 

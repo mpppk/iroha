@@ -63,7 +63,7 @@ func (l *Log) getProgress() float64 {
 	return progress
 }
 
-func (l *Log) PrintProgressLog(depth int, sec float64, msg string) {
+func (l *Log) PrintProgressLog(depth int, msg string) {
 	if depth > l.depthThreshold {
 		return
 	}
@@ -79,7 +79,6 @@ func (l *Log) PrintProgressLog(depth int, sec float64, msg string) {
 	} else {
 		logs = append(logs, "----/----")
 	}
-	logs = append(logs, fmt.Sprintf("%05.2fsec", sec))
 	logs = append(logs, fmt.Sprintf("p:%02.6f", l.getProgress()))
 	logs = append(logs, fmt.Sprintf("g:%06d", runtime.NumGoroutine()))
 	logs = append(logs, fmt.Sprintf("%02v", l.getPercentSlice()))

@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -38,17 +37,14 @@ var genCmd = &cobra.Command{
 			panic(fmt.Errorf("failed to find colName(%s) in headers: %s", colName, headers))
 		}
 
-		log.Print("start preprocessing...")
 		words := make([]string, 0, len(records)-1)
 		for _, record := range records[1:] {
 			words = append(words, record[colIndex])
 		}
 
 		iroha := lib.NewIroha(words)
-		log.Println("preprocessing is done")
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
-		log.Print("start searching...")
 		rowIndicesList, err := iroha.Search()
 		if err != nil {
 			panic(err)
