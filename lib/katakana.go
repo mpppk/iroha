@@ -44,6 +44,14 @@ func (w WordByKatakanaMap) print(wordCountMap WordCountMap, rKatakanaBitsMap RKa
 type WordMap map[WordId]string
 type WordCountMap map[KatakanaBits]int
 
+func newWordCountMap(bitsMap KatakanaBitsMap) WordCountMap {
+	wordCountMap := WordCountMap{}
+	for _, bits := range bitsMap {
+		wordCountMap[bits] = 0
+	}
+	return wordCountMap
+}
+
 type KatakanaCount struct {
 	katakanaBits KatakanaBits
 	count        int
@@ -113,7 +121,7 @@ func NewKatakana(words []string) *Katakana {
 	}
 
 	wordBitsList := katakana.loadWords(normalizedWords)
-	wordCountMap := countWordBitsFrequency(wordBitsList)
+	wordCountMap := countWordBitsFrequency(wordBitsList, km)
 	katakana.wordCountMap = wordCountMap
 	katakana.wordByKatakanaMap = katakana.createWordBitsMap(wordBitsList, wordIds)
 	return katakana
@@ -193,8 +201,8 @@ func toWordBits(bitsMap KatakanaBitsMap, word string) WordBits {
 	return bits
 }
 
-func countWordBitsFrequency(wordBitsList []WordBits) WordCountMap {
-	wordCountMaps := WordCountMap{}
+func countWordBitsFrequency(wordBitsList []WordBits, bitsMap KatakanaBitsMap) WordCountMap {
+	wordCountMaps := newWordCountMap(bitsMap)
 	for _, wb := range wordBitsList {
 		for i := uint64(0); i < KatakanaLen; i++ {
 			katakanaBits := KatakanaBits(1 << i)
