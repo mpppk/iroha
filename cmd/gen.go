@@ -14,6 +14,9 @@ import (
 
 var fileFlagKey = "file"
 var colNameKey = "col"
+var minDepthKey = "min-depth"
+var minLogDepthKey = "min--log-depth"
+var maxDepthKey = "max-depth"
 
 var genCmd = &cobra.Command{
 	Use:   "gen",
@@ -112,4 +115,18 @@ func init() {
 	if err := viper.BindPFlag(colNameKey, genCmd.Flags().Lookup(colNameKey)); err != nil {
 		panic(err)
 	}
+	if err := registerIntToFlags(genCmd, minDepthKey, -1, "min depth"); err != nil {
+		panic(err)
+	}
+	if err := registerIntToFlags(genCmd, maxDepthKey, -1, "max depth"); err != nil {
+		panic(err)
+	}
+	if err := registerIntToFlags(genCmd, minLogDepthKey, 0, "min log depth"); err != nil {
+		panic(err)
+	}
+}
+
+func registerIntToFlags(cmd *cobra.Command, name string, value int, usage string) error {
+	cmd.Flags().Int(name, value, usage)
+	return viper.BindPFlag(name, cmd.Flags().Lookup(name))
 }
