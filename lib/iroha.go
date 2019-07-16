@@ -7,21 +7,25 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var logDepthThreshold = 1
-var minParallelDepth = 1
-var maxParallelDepth = 2
-
 type Iroha struct {
 	katakanaBitsMap KatakanaBitsMap
 	katakana        *Katakana
 	log             *Log
+	depths          *DepthOptions
 }
 
-func NewIroha(words []string) *Iroha {
+type DepthOptions struct {
+	MaxLog      int
+	MinParallel int
+	MaxParallel int
+}
+
+func NewIroha(words []string, options *DepthOptions) *Iroha {
 	km, _ := newKatakanaBitsMap()
 	return &Iroha{
 		katakanaBitsMap: km,
 		katakana:        NewKatakana(words),
+		depths:          options,
 	}
 }
 
@@ -35,7 +39,7 @@ func (i *Iroha) PrintWordByKatakanaMap() {
 
 func (i *Iroha) Search() (rowIndicesList [][]int, err error) {
 	katakanaBitsAndWordsList := i.katakana.ListSortedKatakanaBitsAndWords()
-	i.log = NewLog(katakanaBitsAndWordsList, logDepthThreshold, minParallelDepth)
+	i.log = NewLog(katakanaBitsAndWordsList, i.depths.MaxLog, i.depths.MinParallel)
 	wordsList, _, err := i.searchByBits(katakanaBitsAndWordsList, WordBits(0))
 	if err != nil {
 		return nil, err
@@ -100,7 +104,7 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 	depth := int(KatakanaLen) - len(katakanaBitsAndWords)
 	var irohaWordLists [][]*Word
 
-	goroutineMode := depth >= minParallelDepth && depth <= maxParallelDepth
+	goroutineMode := depth >= i.depths.MinParallel && depth <= i.depths.MaxParallel
 
 	if goroutineMode {
 		eg := errgroup.Group{}
