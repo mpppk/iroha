@@ -7,8 +7,9 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var logThresholdSec = 3.0
-var goroutineThresholdSec = 1.0
+var logDepthThreshold = 1
+var minParallelDepth = 1
+var maxParallelDepth = 2
 
 type Iroha struct {
 	katakanaBitsMap KatakanaBitsMap
@@ -34,7 +35,7 @@ func (i *Iroha) PrintWordByKatakanaMap() {
 
 func (i *Iroha) Search() (rowIndicesList [][]int, err error) {
 	katakanaBitsAndWordsList := i.katakana.ListSortedKatakanaBitsAndWords()
-	i.log = NewLog(katakanaBitsAndWordsList)
+	i.log = NewLog(katakanaBitsAndWordsList, logDepthThreshold, minParallelDepth)
 	wordsList, _, err := i.searchByBits(katakanaBitsAndWordsList, WordBits(0))
 	if err != nil {
 		return nil, err
@@ -99,12 +100,12 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		return nil
 	}
 
-	goroutineMode := false
-	eg := errgroup.Group{}
-	wordListChan := make(chan []*Word, 100)
-	for cur, word := range katakanaAndWordBits.Words {
-		if goroutineMode {
-			gCur := cur
+	goroutineMode := depth >= minParallelDepth && depth <= maxParallelDepth
+
+	if goroutineMode {
+		eg := errgroup.Group{}
+		wordListChan := make(chan []*Word, 100)
+		for _, word := range katakanaAndWordBits.Words {
 			gWord := word
 			gDepth := depth
 			eg.Go(func() error {
@@ -112,12 +113,37 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 				if err := gf(gWord, wordListChan); err != nil {
 					return err
 				}
-				if t := measurer.GetElapsedTimeSec(); t > logThresholdSec {
-					i.log.PrintProgressLog(gDepth, gCur, t, "")
-				}
+				t := measurer.GetElapsedTimeSec()
+				i.log.PrintProgressLog(gDepth, t, "")
 				return nil
 			})
-		} else {
+		}
+		errChan := make(chan error)
+		go func() {
+			if err := eg.Wait(); err != nil {
+				errChan <- err
+				return
+			}
+			close(wordListChan)
+		}()
+
+	L:
+		for {
+			select {
+			case wordList, ok := <-wordListChan:
+				if !ok {
+					break L
+				}
+				irohaWordLists = append(irohaWordLists, wordList)
+			case err, ok := <-errChan:
+				if !ok {
+					return nil, false, fmt.Errorf("unexpected error channel closing")
+				}
+				return nil, false, err
+			}
+		}
+	} else {
+		for _, word := range katakanaAndWordBits.Words {
 			measurer := NewTimeMeasurerAndStart()
 			wordList, ok, err := f(word)
 			if err != nil {
@@ -127,39 +153,7 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 				irohaWordLists = append(irohaWordLists, wordList...)
 			}
 			t := measurer.GetElapsedTimeSec()
-			if t > logThresholdSec {
-				i.log.PrintProgressLog(depth, cur, t, "")
-			}
-			if t > goroutineThresholdSec {
-				goroutineMode = true
-			}
-
-		}
-
-	}
-
-	errChan := make(chan error)
-	go func() {
-		if err := eg.Wait(); err != nil {
-			errChan <- err
-			return
-		}
-		close(wordListChan)
-	}()
-
-L:
-	for {
-		select {
-		case wordList, ok := <-wordListChan:
-			if !ok {
-				break L
-			}
-			irohaWordLists = append(irohaWordLists, wordList)
-		case err, ok := <-errChan:
-			if !ok {
-				return nil, false, fmt.Errorf("unexpected error channel closing")
-			}
-			return nil, false, err
+			i.log.PrintProgressLog(depth, t, "")
 		}
 	}
 
