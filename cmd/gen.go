@@ -46,8 +46,8 @@ var genCmd = &cobra.Command{
 
 		iroha := lib.NewIroha(words)
 		log.Println("preprocessing is done")
-		//iroha.PrintWordCountMap()
-		//iroha.PrintWordByKatakanaMap()
+		iroha.PrintWordCountMap()
+		iroha.PrintWordByKatakanaMap()
 		log.Print("start searching...")
 		rowIndicesList, err := iroha.Search()
 		if err != nil {
@@ -56,7 +56,9 @@ var genCmd = &cobra.Command{
 
 		for _, rowIndices := range rowIndicesList {
 			for _, rowIndex := range rowIndices {
-				fmt.Println(strings.Join(records[rowIndex], ","))
+				// 行番号表示には、header+行番号が1始まりであることを考慮して2を足す
+				// recordsにはheaderを考慮して1を足す
+				fmt.Println(rowIndex+2, strings.Join(records[rowIndex+1], ","))
 			}
 			fmt.Print("\n----------\n\n")
 		}
