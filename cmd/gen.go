@@ -7,37 +7,37 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mpppk/iroha/gen"
+
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-var fileFlagKey = "file"
-var colNameKey = "col"
-var minDepthKey = "min-depth"
-var minLogDepthKey = "min--log-depth"
-var maxDepthKey = "max-depth"
 
 var genCmd = &cobra.Command{
 	Use:   "gen",
 	Short: "Generate iroha-uta",
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		filePath := viper.GetString(fileFlagKey)
-		if filePath == "" {
+		config := gen.NewConfigFromViper()
+		if !config.IsValid() {
+			FprintlnOrPanic(os.Stderr, "invalid config:", *config)
+			os.Exit(1)
+		}
+
+		if config.FilePath == "" {
 			FprintlnOrPanic(os.Stderr, "CSV file path should be specified by --file flag")
 			os.Exit(1)
 		}
-		colName := viper.GetString(colNameKey)
 
-		records, err := lib.ReadCSV(filePath)
+		records, err := lib.ReadCSV(config.FilePath)
 		if err != nil {
 			panic(err)
 		}
 		headers := records[0]
-		colIndex, ok := findTargetColIndex(colName, headers)
+		colIndex, ok := findTargetColIndex(config.ColName, headers)
 		if !ok {
-			panic(fmt.Errorf("failed to find colName(%s) in headers: %s", colName, headers))
+			panic(fmt.Errorf("failed to find colName(%s) in headers: %s", config.ColName, headers))
 		}
 
 		words := make([]string, 0, len(records)-1)
@@ -53,13 +53,11 @@ var genCmd = &cobra.Command{
 			panic(err)
 		}
 
-		for _, rowIndices := range rowIndicesList {
-			for _, rowIndex := range rowIndices {
-				// 行番号表示には、header+行番号が1始まりであることを考慮して2を足す
-				// recordsにはheaderを考慮して1を足す
-				fmt.Println(rowIndex+2, strings.Join(records[rowIndex+1], ","))
-			}
-			fmt.Print("\n----------\n\n")
+		switch config.OutputMode {
+		case gen.PrettyOutputMode:
+			gen.PrintAsPretty(records, rowIndicesList)
+		case gen.IndicesOutputMode:
+			gen.PrintIndices(rowIndicesList)
 		}
 		FprintfOrPanic(os.Stderr, "%d iroha-uta were found!", len(rowIndicesList))
 	},
@@ -106,22 +104,27 @@ func findTargetColIndex(colName string, headers []string) (int, bool) {
 }
 
 func init() {
+	flagKeys := gen.NewFlagKeys()
 	rootCmd.AddCommand(genCmd)
-	genCmd.Flags().StringP(fileFlagKey, "f", "", "CSV file path")
-	if err := viper.BindPFlag(fileFlagKey, genCmd.Flags().Lookup(fileFlagKey)); err != nil {
+	genCmd.Flags().StringP(flagKeys.File, "f", "", "CSV file path")
+	if err := viper.BindPFlag(flagKeys.File, genCmd.Flags().Lookup(flagKeys.File)); err != nil {
 		panic(err)
 	}
-	genCmd.Flags().StringP(colNameKey, "c", "0", "Target column name or index")
-	if err := viper.BindPFlag(colNameKey, genCmd.Flags().Lookup(colNameKey)); err != nil {
+	genCmd.Flags().StringP(flagKeys.ColName, "c", "0", "Target column name or index")
+	if err := viper.BindPFlag(flagKeys.ColName, genCmd.Flags().Lookup(flagKeys.ColName)); err != nil {
 		panic(err)
 	}
-	if err := registerIntToFlags(genCmd, minDepthKey, -1, "min depth"); err != nil {
+	genCmd.Flags().String(flagKeys.OutputMode, "pretty", "Output mode(pretty,indices,none)")
+	if err := viper.BindPFlag(flagKeys.OutputMode, genCmd.Flags().Lookup(flagKeys.OutputMode)); err != nil {
 		panic(err)
 	}
-	if err := registerIntToFlags(genCmd, maxDepthKey, -1, "max depth"); err != nil {
+	if err := registerIntToFlags(genCmd, flagKeys.MinParallelDepth, -1, "min depth"); err != nil {
 		panic(err)
 	}
-	if err := registerIntToFlags(genCmd, minLogDepthKey, 0, "min log depth"); err != nil {
+	if err := registerIntToFlags(genCmd, flagKeys.MaxParallelDepth, -1, "max depth"); err != nil {
+		panic(err)
+	}
+	if err := registerIntToFlags(genCmd, flagKeys.MaxLogDepth, 0, "max log depth"); err != nil {
 		panic(err)
 	}
 }
