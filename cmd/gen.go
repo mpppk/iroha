@@ -45,7 +45,7 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		iroha := lib.NewIroha(words, &lib.DepthOptions{})
+		iroha := lib.NewIroha(words, &lib.NoStorage{}, &lib.DepthOptions{})
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 		rowIndicesList, err := iroha.Search()

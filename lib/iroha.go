@@ -12,20 +12,23 @@ type Iroha struct {
 	katakana        *Katakana
 	log             *Log
 	depths          *DepthOptions
+	storage         Storage
 }
 
 type DepthOptions struct {
 	MaxLog      int
 	MinParallel int
 	MaxParallel int
+	MaxStorage  int
 }
 
-func NewIroha(words []string, options *DepthOptions) *Iroha {
+func NewIroha(words []string, storage Storage, options *DepthOptions) *Iroha {
 	km, _ := newKatakanaBitsMap()
 	return &Iroha{
 		katakanaBitsMap: km,
 		katakana:        NewKatakana(words),
 		depths:          options,
+		storage:         storage,
 	}
 }
 
@@ -40,7 +43,7 @@ func (i *Iroha) PrintWordByKatakanaMap() {
 func (i *Iroha) Search() (rowIndicesList [][]int, err error) {
 	katakanaBitsAndWordsList := i.katakana.ListSortedKatakanaBitsAndWords()
 	i.log = NewLog(katakanaBitsAndWordsList, i.depths.MaxLog, i.depths.MinParallel)
-	wordsList, _, err := i.searchByBits(katakanaBitsAndWordsList, WordBits(0))
+	wordsList, _, err := i.searchByBits([]int{}, katakanaBitsAndWordsList, WordBits(0))
 	if err != nil {
 		return nil, err
 	}
@@ -54,13 +57,13 @@ func (i *Iroha) Search() (rowIndicesList [][]int, err error) {
 	return
 }
 
-func (i *Iroha) f(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
+func (i *Iroha) f(word *Word, usedIndices []int, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
 	var results [][]*Word
 	if remainKatakanaBits.HasDuplicatedKatakana(word.Bits) {
 		return nil, false, nil
 	}
 	newRemainKatakanaBits := remainKatakanaBits.Merge(word.Bits)
-	newIrohaWordIdLists, ok, err := i.searchByBits(katakanaBitsAndWords[1:], newRemainKatakanaBits)
+	newIrohaWordIdLists, ok, err := i.searchByBits(usedIndices, katakanaBitsAndWords[1:], newRemainKatakanaBits)
 	if err != nil {
 		return nil, false, err
 	}
@@ -73,8 +76,8 @@ func (i *Iroha) f(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, rema
 	return results, true, nil
 }
 
-func (i *Iroha) gf(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits, wordListChan chan<- []*Word) error {
-	wordLists, ok, err := i.f(word, katakanaBitsAndWords, remainKatakanaBits)
+func (i *Iroha) gf(word *Word, usedIndices []int, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits, wordListChan chan<- []*Word) error {
+	wordLists, ok, err := i.f(word, usedIndices, katakanaBitsAndWords, remainKatakanaBits)
 	if err != nil {
 		return err
 	}
@@ -86,7 +89,7 @@ func (i *Iroha) gf(word *Word, katakanaBitsAndWords []*KatakanaBitsAndWords, rem
 	return nil
 }
 
-func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
+func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*KatakanaBitsAndWords, remainKatakanaBits WordBits) ([][]*Word, bool, error) {
 	remainKatakanaNum := bits.OnesCount64(uint64(remainKatakanaBits))
 	if remainKatakanaNum == int(KatakanaLen) {
 		return [][]*Word{{}}, true, nil
@@ -101,6 +104,12 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		return nil, false, nil
 	}
 
+	if results, ok, err := i.storage.Get(usedIndices); err != nil {
+		return nil, false, err
+	} else if ok {
+		return results, true, nil
+	}
+
 	depth := int(KatakanaLen) - len(katakanaBitsAndWords)
 	var irohaWordLists [][]*Word
 
@@ -109,10 +118,11 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 	if goroutineMode {
 		eg := errgroup.Group{}
 		wordListChan := make(chan []*Word, 100)
-		for _, word := range katakanaAndWordBits.Words {
+		for index, word := range katakanaAndWordBits.Words {
 			gWord := word
+			newIndices := generateNewUsedIndices(usedIndices, index)
 			eg.Go(func() error {
-				if err := i.gf(gWord, katakanaBitsAndWords, remainKatakanaBits, wordListChan); err != nil {
+				if err := i.gf(gWord, newIndices, katakanaBitsAndWords, remainKatakanaBits, wordListChan); err != nil {
 					return err
 				}
 				i.log.PrintProgressLog(depth, "")
@@ -144,8 +154,9 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 			}
 		}
 	} else {
-		for _, word := range katakanaAndWordBits.Words {
-			wordList, ok, err := i.f(word, katakanaBitsAndWords, remainKatakanaBits)
+		for index, word := range katakanaAndWordBits.Words {
+			newIndices := generateNewUsedIndices(usedIndices, index)
+			wordList, ok, err := i.f(word, newIndices, katakanaBitsAndWords, remainKatakanaBits)
 			if err != nil {
 				return nil, false, err
 			}
@@ -158,7 +169,7 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 
 	// どれも入れない場合
 	if remainKatakanaBits.has(katakanaAndWordBits.KatakanaBits) {
-		otherIrohaWordBitsLists, ok, err := i.searchByBits(katakanaBitsAndWords[1:], remainKatakanaBits)
+		otherIrohaWordBitsLists, ok, err := i.searchByBits(append(usedIndices, -1), katakanaBitsAndWords[1:], remainKatakanaBits)
 		if err != nil {
 			return nil, false, err
 		}
@@ -167,5 +178,16 @@ func (i *Iroha) searchByBits(katakanaBitsAndWords []*KatakanaBitsAndWords, remai
 		}
 	}
 
+	if err := i.storage.Set(usedIndices); err != nil {
+		return nil, false, err
+	}
+
 	return irohaWordLists, len(irohaWordLists) > 0, nil
+}
+
+func generateNewUsedIndices(usedIndices []int, newIndex int) []int {
+	newIndices := make([]int, len(usedIndices), len(usedIndices)+1)
+	copy(newIndices, usedIndices)
+	newIndices = append(newIndices, newIndex)
+	return newIndices
 }
