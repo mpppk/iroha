@@ -64,7 +64,7 @@ func (l *Log) getProgress() float64 {
 }
 
 func (l *Log) PrintProgressLog(depth int, msg string) {
-	if depth > l.depthThreshold {
+	if depth > l.depthThreshold || depth < 0 {
 		return
 	}
 	l.updateProgress(depth)
