@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -72,13 +73,50 @@ func (b *BoltStorage) Set(indices []int, wordsList [][]*Word) error {
 	if err != nil {
 		return err
 	}
-	return b.db.Update(func(tx *bolt.Tx) error {
+	err = b.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(b.bucketName))
 		err := b.Put(
 			toStorageKey(indices),
 			wordsListJsonBytes)
 		return errors.Wrapf(err, "failed to put wordsList to bolt DB: indices:%s", indices)
 	})
+	if err != nil {
+		return err
+	}
+	if err := b.deleteIndexChildren(indices); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *BoltStorage) deleteIndexChildren(indices []int) error {
+	var deleteKeys [][]byte
+	err := b.db.View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(b.bucketName))
+		c := bucket.Cursor()
+
+		prefix := toStorageKey(indices)
+		strPrefix := string(prefix)
+		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+			if string(k) != strPrefix {
+				deleteKeys = append(deleteKeys, k)
+			}
+		}
+		return nil
+	})
+	err = b.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(b.bucketName))
+		for _, deleteKey := range deleteKeys {
+			if err := bucket.Delete(deleteKey); err != nil {
+				return errors.Wrap(err, "failed to delete key: "+string(deleteKey))
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return errors.Wrapf(err, "failed to delete keys: %s", deleteKeys)
+	}
+	return nil
 }
 
 func toStorageKey(indices []int) []byte {
