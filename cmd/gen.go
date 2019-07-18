@@ -45,7 +45,7 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		boltStorage, err := lib.NewBoltStorage("test.db")
+		boltStorage, err := lib.NewBoltStorage(config.DBPath)
 		if err != nil {
 			panic(err)
 		}
@@ -112,6 +112,10 @@ func init() {
 	rootCmd.AddCommand(genCmd)
 	genCmd.Flags().StringP(flagKeys.File, "f", "", "CSV file path")
 	if err := viper.BindPFlag(flagKeys.File, genCmd.Flags().Lookup(flagKeys.File)); err != nil {
+		panic(err)
+	}
+	genCmd.Flags().StringP(flagKeys.DBPath, "d", "", "DB file path")
+	if err := viper.BindPFlag(flagKeys.DBPath, genCmd.Flags().Lookup(flagKeys.DBPath)); err != nil {
 		panic(err)
 	}
 	genCmd.Flags().StringP(flagKeys.ColName, "c", "0", "Target column name or index")

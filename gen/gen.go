@@ -17,6 +17,7 @@ var NoneOutputMode OutputMode = "none"
 type OutputMode string
 type FlagKeys struct {
 	File             string
+	DBPath           string
 	ColName          string
 	MinParallelDepth string
 	MaxLogDepth      string
@@ -28,6 +29,7 @@ type FlagKeys struct {
 func NewFlagKeys() *FlagKeys {
 	return &FlagKeys{
 		File:             "file",
+		DBPath:           "db-path",
 		ColName:          "col",
 		MinParallelDepth: "min-p-depth",
 		MaxLogDepth:      "max-log-depth",
@@ -39,6 +41,7 @@ func NewFlagKeys() *FlagKeys {
 
 type Config struct {
 	FilePath     string
+	DBPath       string
 	ColName      string
 	DepthOptions *lib.DepthOptions
 	OutputMode   OutputMode
@@ -48,6 +51,7 @@ func NewConfigFromViper() *Config {
 	flagKeys := NewFlagKeys()
 	return &Config{
 		FilePath: viper.GetString(flagKeys.File),
+		DBPath:   viper.GetString(flagKeys.DBPath),
 		ColName:  viper.GetString(flagKeys.ColName),
 		DepthOptions: &lib.DepthOptions{
 			MinParallel: viper.GetInt(flagKeys.MinParallelDepth),
