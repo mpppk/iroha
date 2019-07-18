@@ -45,7 +45,11 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		iroha := lib.NewIroha(words, &lib.NoStorage{}, &lib.DepthOptions{})
+		boltStorage, err := lib.NewBoltStorage("test.db")
+		if err != nil {
+			panic(err)
+		}
+		iroha := lib.NewIroha(words, boltStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 		rowIndicesList, err := iroha.Search()
@@ -125,6 +129,9 @@ func init() {
 		panic(err)
 	}
 	if err := registerIntToFlags(genCmd, flagKeys.MaxLogDepth, 0, "max log depth"); err != nil {
+		panic(err)
+	}
+	if err := registerIntToFlags(genCmd, flagKeys.MaxStorageDepth, -1, "max storage depth"); err != nil {
 		panic(err)
 	}
 }
