@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/mpppk/iroha/gen"
+	"github.com/mpppk/iroha/storage"
 
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
@@ -45,11 +46,12 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		boltStorage, err := lib.NewBoltStorage(config.DBPath)
+		boltStorage, err := storage.NewBolt(config.DBPath)
+		memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
 		if err != nil {
 			panic(err)
 		}
-		iroha := lib.NewIroha(words, boltStorage, config.DepthOptions)
+		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 		rowIndicesList, err := iroha.Search()

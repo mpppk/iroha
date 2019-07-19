@@ -1,42 +1,27 @@
-package lib
+package storage
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"strconv"
 
-	"github.com/pkg/errors"
+	"github.com/mpppk/iroha/katakana"
 
 	bolt "github.com/mpppk/bbolt"
+	"github.com/pkg/errors"
 )
 
-type Storage interface {
-	Set(indices []int, wordsList [][]*Word) error
-	Get(indices []int) ([][]*Word, bool, error)
-}
-
-type NoStorage struct{}
-
-func (e *NoStorage) Get(indices []int) ([][]*Word, bool, error) {
-	return nil, false, nil
-}
-
-func (e *NoStorage) Set(indices []int, wordsList [][]*Word) error {
-	return nil
-}
-
-type BoltStorage struct {
+type Bolt struct {
 	db         *bolt.DB
 	bucketName string
 }
 
-func NewBoltStorage(dbPath string) (*BoltStorage, error) {
+func NewBolt(dbPath string) (*Bolt, error) {
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		return nil, err
 	}
-	boltStorage := &BoltStorage{
+	boltStorage := &Bolt{
 		db:         db,
 		bucketName: "main",
 	}
@@ -44,8 +29,8 @@ func NewBoltStorage(dbPath string) (*BoltStorage, error) {
 	return boltStorage, err
 }
 
-func (b *BoltStorage) Get(indices []int) (wordsList [][]*Word, ok bool, err error) {
-	wordsList = make([][]*Word, 0, 10)
+func (b *Bolt) Get(indices []int) (wordsList [][]*katakana.Word, ok bool, err error) {
+	wordsList = make([][]*katakana.Word, 0, 10)
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucketName))
 		if bucket == nil {
@@ -62,10 +47,10 @@ func (b *BoltStorage) Get(indices []int) (wordsList [][]*Word, ok bool, err erro
 	return
 }
 
-func (b *BoltStorage) Set(indices []int, wordsList [][]*Word) error {
+func (b *Bolt) Set(indices []int, wordsList [][]*katakana.Word) error {
 	wl := wordsList
 	if wl == nil {
-		wl = make([][]*Word, 0)
+		wl = make([][]*katakana.Word, 0)
 	}
 
 	wordsListJsonBytes, err := json.Marshal(wl)
@@ -89,7 +74,7 @@ func (b *BoltStorage) Set(indices []int, wordsList [][]*Word) error {
 	return nil
 }
 
-func (b *BoltStorage) deleteIndexChildren(indices []int) error {
+func (b *Bolt) deleteIndexChildren(indices []int) error {
 	var deleteKeys [][]byte
 	err := b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucketName))
@@ -117,24 +102,4 @@ func (b *BoltStorage) deleteIndexChildren(indices []int) error {
 		return errors.Wrapf(err, "failed to delete keys: %s", deleteKeys)
 	}
 	return nil
-}
-
-func toStorageKey(indices []int) []byte {
-	strKey := ""
-	if len(indices) == 0 {
-		return []byte("no-index")
-	}
-	for _, index := range indices {
-		strKey += strconv.Itoa(index) + ":"
-	}
-	return []byte(strKey)
-}
-
-func (b *BoltStorage) createBucketIfNotExists(bucketName string) error {
-	return b.db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucketIfNotExists([]byte(bucketName)); err != nil {
-			return fmt.Errorf("failed to create %s bucket: %s", bucketName, err)
-		}
-		return nil
-	})
 }
