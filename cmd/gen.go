@@ -34,9 +34,8 @@ var genCmd = &cobra.Command{
 		}
 
 		records, err := lib.ReadCSV(config.FilePath)
-		if err != nil {
-			panic(err)
-		}
+		panicIfErrorExists(err)
+
 		headers := records[0]
 		colIndex, ok := findTargetColIndex(config.ColName, headers)
 		if !ok {
@@ -49,17 +48,14 @@ var genCmd = &cobra.Command{
 		}
 
 		boltStorage, err := storage.NewBolt(config.DBPath)
+		panicIfErrorExists(err)
 		memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
-		if err != nil {
-			panic(err)
-		}
+
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 		rowIndicesList, err := iroha.Search()
-		if err != nil {
-			panic(err)
-		}
+		panicIfErrorExists(err)
 
 		switch config.OutputMode {
 		case gen.PrettyOutputMode:
@@ -69,6 +65,12 @@ var genCmd = &cobra.Command{
 		}
 		FprintfOrPanic(os.Stderr, "%d iroha-uta were found!", len(rowIndicesList))
 	},
+}
+
+func panicIfErrorExists(err error) {
+	if err != nil {
+		panic(err)
+	}
 }
 
 func FprintlnOrPanic(w io.Writer, a ...interface{}) {
