@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/mpppk/iroha/katakana"
+	"github.com/mpppk/iroha/ktkn"
 
 	bolt "github.com/mpppk/bbolt"
 	"github.com/pkg/errors"
@@ -29,8 +29,8 @@ func NewBolt(dbPath string) (*Bolt, error) {
 	return boltStorage, err
 }
 
-func (b *Bolt) Get(indices []int) (wordsList [][]*katakana.Word, ok bool, err error) {
-	wordsList = make([][]*katakana.Word, 0, 10)
+func (b *Bolt) Get(indices []int) (wordsList [][]*ktkn.Word, ok bool, err error) {
+	wordsList = make([][]*ktkn.Word, 0, 10)
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucketName))
 		if bucket == nil {
@@ -47,10 +47,10 @@ func (b *Bolt) Get(indices []int) (wordsList [][]*katakana.Word, ok bool, err er
 	return
 }
 
-func (b *Bolt) Set(indices []int, wordsList [][]*katakana.Word) error {
+func (b *Bolt) Set(indices []int, wordsList [][]*ktkn.Word) error {
 	wl := wordsList
 	if wl == nil {
-		wl = make([][]*katakana.Word, 0)
+		wl = make([][]*ktkn.Word, 0)
 	}
 
 	wordsListJsonBytes, err := json.Marshal(wl)

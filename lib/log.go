@@ -5,6 +5,8 @@ import (
 	"log"
 	"runtime"
 	"strings"
+
+	"github.com/mpppk/iroha/ktkn"
 )
 
 type Log struct {
@@ -15,7 +17,7 @@ type Log struct {
 	minParallelDepth int
 }
 
-func NewLog(katakanaBitsAndWordsList []*KatakanaBitsAndWords, depthThreshold, maxParallelDepth int) *Log {
+func NewLog(katakanaBitsAndWordsList []*ktkn.KatakanaBitsAndWords, depthThreshold, maxParallelDepth int) *Log {
 	counts := make([]int, len(katakanaBitsAndWordsList), len(katakanaBitsAndWordsList))
 	for index, katakanaBitsAndWords := range katakanaBitsAndWordsList {
 		counts[index] = len(katakanaBitsAndWords.Words)

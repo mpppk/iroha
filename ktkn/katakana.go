@@ -1,4 +1,4 @@
-package lib
+package ktkn
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ type Word struct {
 	Bits WordBits
 }
 
-func (w WordBits) has(katakanaBits KatakanaBits) bool {
+func (w WordBits) Has(katakanaBits KatakanaBits) bool {
 	return w&WordBits(katakanaBits) != 0
 }
 
@@ -113,7 +113,7 @@ var KatakanaLen = uint64(45)
 
 func NewKatakana(words []string) *Katakana {
 	normalizedWords, orgWords, wordIds := NormalizeAndFilterKatakanaWords(words)
-	km, rkm := newKatakanaBitsMap()
+	km, rkm := NewKatakanaBitsMap()
 	katakana := &Katakana{
 		katakanaBitsMap:  km,
 		RKatakanaBitsMap: rkm,
@@ -181,7 +181,7 @@ func newWordBitsMap(sortedKatakanaBits []KatakanaBits, wordBitsList []WordBits, 
 	wordBitsMap := WordByKatakanaMap{}
 	for i, wordBits := range wordBitsList {
 		for _, katakanaBits := range sortedKatakanaBits {
-			if wordBits.has(katakanaBits) {
+			if wordBits.Has(katakanaBits) {
 				wordBitsMap[katakanaBits] = append(wordBitsMap[katakanaBits], &Word{
 					Id:   WordId(wordIds[i]),
 					Bits: wordBits,
@@ -206,7 +206,7 @@ func countWordBitsFrequency(wordBitsList []WordBits, bitsMap KatakanaBitsMap) Wo
 	for _, wb := range wordBitsList {
 		for i := uint64(0); i < KatakanaLen; i++ {
 			katakanaBits := KatakanaBits(1 << i)
-			if wb.has(katakanaBits) {
+			if wb.Has(katakanaBits) {
 				wordCountMaps[katakanaBits]++
 			}
 		}
@@ -229,7 +229,7 @@ func newKatakanaList() []rune {
 	}
 }
 
-func newKatakanaBitsMap() (KatakanaBitsMap, RKatakanaBitsMap) {
+func NewKatakanaBitsMap() (KatakanaBitsMap, RKatakanaBitsMap) {
 	m := KatakanaBitsMap{}
 	rm := RKatakanaBitsMap{}
 	for i, katakana := range newKatakanaList() {

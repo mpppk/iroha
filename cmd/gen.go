@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mpppk/iroha/ktkn"
+
 	"github.com/mpppk/iroha/gen"
 	"github.com/mpppk/iroha/storage"
 
@@ -83,14 +85,14 @@ func FprintfOrPanic(w io.Writer, format string, a ...interface{}) {
 
 func IsValidIroha(words []string) (bool, string) {
 	concatenatedWord := strings.Join(words, "")
-	n := lib.NormalizeKatakanaWord(concatenatedWord)
+	n := ktkn.NormalizeKatakanaWord(concatenatedWord)
 	runes := []rune(n)
 
-	if len(runes) != int(lib.KatakanaLen) {
+	if len(runes) != int(ktkn.KatakanaLen) {
 		return false, n
 	}
 
-	if lib.HasDuplicatedRune(n) {
+	if ktkn.HasDuplicatedRune(n) {
 		return false, n
 	}
 

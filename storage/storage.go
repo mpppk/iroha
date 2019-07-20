@@ -4,14 +4,13 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mpppk/iroha/katakana"
-
 	bolt "github.com/mpppk/bbolt"
+	"github.com/mpppk/iroha/ktkn"
 )
 
 type Storage interface {
-	Set(indices []int, wordsList [][]*katakana.Word) error
-	Get(indices []int) ([][]*katakana.Word, bool, error)
+	Set(indices []int, wordsList [][]*ktkn.Word) error
+	Get(indices []int) ([][]*ktkn.Word, bool, error)
 }
 
 func toStorageStrKey(indices []int) string {

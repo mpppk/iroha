@@ -1,34 +1,61 @@
 package storage
 
 import (
-	"github.com/mpppk/iroha/katakana"
+	"sync"
+
+	"github.com/mpppk/iroha/ktkn"
 )
 
+type MemoryCache struct {
+	m   map[string][][]*ktkn.Word
+	mut *sync.RWMutex
+}
+
+func newMemoryCache() *MemoryCache {
+	return &MemoryCache{
+		m:   map[string][][]*ktkn.Word{},
+		mut: new(sync.RWMutex),
+	}
+}
+
+func (mc MemoryCache) Get(key string) ([][]*ktkn.Word, bool) {
+	mc.mut.RLock()
+	wordsList, ok := mc.m[key]
+	mc.mut.RUnlock()
+	return wordsList, ok
+}
+
+func (mc MemoryCache) Set(key string, wordsList [][]*ktkn.Word) {
+	mc.mut.Lock()
+	mc.m[key] = wordsList
+	mc.mut.Unlock()
+}
+
 type Memory struct {
-	cache        map[string][][]*katakana.Word
+	cache        *MemoryCache
 	otherStorage Storage
 }
 
-func NewMemory(storage Storage) *Memory {
+func NewMemory() *Memory {
 	return &Memory{
 		otherStorage: &None{},
+		cache:        newMemoryCache(),
 	}
-
 }
 
 func NewMemoryWithOtherStorage(storage Storage) *Memory {
-	return &Memory{
-		otherStorage: storage,
-	}
+	m := NewMemory()
+	m.otherStorage = storage
+	return m
 }
 
-func (m *Memory) Set(indices []int, wordsList [][]*katakana.Word) error {
-	m.cache[toStorageStrKey(indices)] = wordsList
+func (m *Memory) Set(indices []int, wordsList [][]*ktkn.Word) error {
+	m.cache.Set(toStorageStrKey(indices), wordsList)
 	return m.otherStorage.Set(indices, wordsList)
 }
 
-func (m *Memory) Get(indices []int) ([][]*katakana.Word, bool, error) {
-	wordsList, ok := m.cache[toStorageStrKey(indices)]
+func (m *Memory) Get(indices []int) ([][]*ktkn.Word, bool, error) {
+	wordsList, ok := m.cache.Get(toStorageStrKey(indices))
 	if ok {
 		return wordsList, true, nil
 	}
