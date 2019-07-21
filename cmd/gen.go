@@ -1,16 +1,18 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"strconv"
 	"strings"
 
+	"github.com/mpppk/iroha/storage"
+
 	"github.com/mpppk/iroha/ktkn"
 
 	"github.com/mpppk/iroha/gen"
-	"github.com/mpppk/iroha/storage"
 
 	"github.com/mpppk/iroha/lib"
 	"github.com/spf13/cobra"
@@ -47,11 +49,13 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		boltStorage, err := storage.NewBolt(config.DBPath)
-		panicIfErrorExists(err)
-		memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
-
-		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
+		//boltStorage, err := storage.NewBolt(config.DBPath)
+		//panicIfErrorExists(err)
+		//memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
+		//iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
+		serviceAccountFilePath := "iroha-247312-5f9b1522fbd5.json"
+		firestoreStorage, err := storage.NewFireStore(context.Background(), serviceAccountFilePath)
+		iroha := lib.NewIroha(words, firestoreStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 		rowIndicesList, err := iroha.Search()
