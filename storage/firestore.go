@@ -2,7 +2,8 @@ package storage
 
 import (
 	"context"
-	"encoding/json"
+
+	cstorage "cloud.google.com/go/storage"
 
 	"github.com/pkg/errors"
 
@@ -14,20 +15,16 @@ import (
 )
 
 type FireStore struct {
-	client         *firestore.Client
-	collectionName string
-}
-
-type Cache struct {
-	indices   []int
-	wordsList [][]*ktkn.Word
+	client             *firestore.Client
+	cstorageClient     *CloudStorageClient
+	rootCollectionName string
 }
 
 type cacheDoc struct {
-	WordsList string
+	Progress string
 }
 
-func NewFireStore(ctx context.Context, filePath string) (storage *FireStore, err error) {
+func NewFireStore(ctx context.Context, filePath string, rootCollectionName string) (_ *FireStore, err error) {
 	var baseErrMsg = "failed to create firestore storage: "
 	sa := option.WithCredentialsFile(filePath)
 	app, err := firebase.NewApp(ctx, nil, sa)
@@ -40,9 +37,24 @@ func NewFireStore(ctx context.Context, filePath string) (storage *FireStore, err
 		return nil, errors.Wrap(err, baseErrMsg+"failed to create firestore client")
 	}
 
+	// FIXME
+	bucketAttrs := &cstorage.BucketAttrs{
+		StorageClass: "STANDARD",
+		Location:     "asia-northeast1",
+	}
+	bucketClient, err := newCloudStorageClient(ctx, app, "iroha-247312", rootCollectionName, bucketAttrs)
+	if err != nil {
+		return nil, errors.Wrap(err, baseErrMsg+"failed to create bucket client")
+	}
+
+	if _, err := bucketClient.createBucketIfDoesNotExist(ctx, rootCollectionName); err != nil {
+		return nil, errors.Wrap(err, "failed to create new bucket to cloud storage. bucket name: "+rootCollectionName)
+	}
+
 	return &FireStore{
-		client:         client,
-		collectionName: "cache",
+		client:             client,
+		cstorageClient:     bucketClient,
+		rootCollectionName: rootCollectionName,
 	}, errors.Wrap(err, baseErrMsg+"failed to close firestore client")
 }
 
@@ -52,9 +64,13 @@ func (f *FireStore) Set(indices []int, wordsList [][]*ktkn.Word) error {
 	if wl == nil {
 		wl = make([][]*ktkn.Word, 0)
 	}
-	wordsListJsonBytes, err := json.Marshal(wordsList)
-	doc := &cacheDoc{WordsList: string(wordsListJsonBytes)}
-	_, err = f.client.Collection(f.collectionName).Doc(toStorageStrKey(indices)).Set(ctx, doc)
+
+	if err := f.cstorageClient.SaveWordsList(ctx, indices, wordsList); err != nil {
+		return errors.Wrap(err, "failed to set wordsList to cloud storage")
+	}
+
+	doc := &cacheDoc{Progress: "done"}
+	_, err := f.client.Collection(f.rootCollectionName).Doc(toStorageStrKey(indices)).Set(ctx, doc)
 	if err != nil {
 		return errors.Wrap(err, "failed to set cache to firestore")
 	}
@@ -63,22 +79,5 @@ func (f *FireStore) Set(indices []int, wordsList [][]*ktkn.Word) error {
 
 func (f *FireStore) Get(indices []int) ([][]*ktkn.Word, bool, error) {
 	ctx := context.Background()
-	key := toStorageStrKey(indices)
-	dsnap, err := f.client.Collection(f.collectionName).Doc(key).Get(ctx)
-	if dsnap != nil && !dsnap.Exists() {
-		return nil, false, nil
-	}
-	if err != nil {
-		return nil, false, errors.Wrapf(err, "failed to get cache from firestore. indices: %s", key)
-	}
-	var doc cacheDoc
-	if err := dsnap.DataTo(&doc); err != nil {
-		return nil, false, errors.Wrap(err, "failed to convert firestore data to WordsList")
-	}
-
-	var wordsList [][]*ktkn.Word
-	if err = json.Unmarshal([]byte(doc.WordsList), &wordsList); err != nil {
-		return nil, false, errors.Wrap(err, "failed to unmarshal firestore results")
-	}
-	return wordsList, true, nil
+	return f.cstorageClient.Get(ctx, indices)
 }

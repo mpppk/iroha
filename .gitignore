@@ -2,3 +2,4 @@
 vendor/
 .vendor-new/
 .DS_Store
+*.json
