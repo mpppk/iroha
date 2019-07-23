@@ -50,6 +50,10 @@ func NewMemoryWithOtherStorage(storage Storage) *Memory {
 	return m
 }
 
+func (m *Memory) Start(ctx context.Context, indices []int) error {
+	return m.otherStorage.Start(ctx, indices)
+}
+
 func (m *Memory) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error {
 	m.cache.Set(toStorageStrKey(indices), wordsList)
 	return m.otherStorage.Set(ctx, indices, wordsList)

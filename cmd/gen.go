@@ -55,7 +55,8 @@ var genCmd = &cobra.Command{
 		//iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		ctx := context.Background()
 		serviceAccountFilePath := "iroha-247312-5f9b1522fbd5.json"
-		firestoreStorage, err := storage.NewFireStore(ctx, serviceAccountFilePath, config.DBPath)
+		// FIXME projectID
+		firestoreStorage, err := storage.NewFireStore(ctx, serviceAccountFilePath, config.DBPath, "iroha-247312")
 		panicIfErrorExists(err)
 		memoryStorage := storage.NewMemoryWithOtherStorage(firestoreStorage)
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)

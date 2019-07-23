@@ -9,7 +9,12 @@ import (
 	"github.com/mpppk/iroha/ktkn"
 )
 
+var progressNotStarted = 0
+var progressProcessing = 1
+var progressDone = 2
+
 type Storage interface {
+	Start(ctx context.Context, indices []int) error
 	Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error
 	Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error)
 }

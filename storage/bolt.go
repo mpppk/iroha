@@ -12,6 +12,7 @@ import (
 )
 
 type Bolt struct {
+	*None
 	db         *bolt.DB
 	bucketName string
 }

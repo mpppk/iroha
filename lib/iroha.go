@@ -122,6 +122,12 @@ func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*ktkn.Kat
 		}
 	}
 
+	if depth == i.depths.MaxStorage {
+		if err := i.storage.Start(ctx, usedIndices); err != nil {
+			return nil, false, err
+		}
+	}
+
 	var irohaWordLists [][]*ktkn.Word
 	goroutineMode := depth >= i.depths.MinParallel && depth <= i.depths.MaxParallel
 	if goroutineMode {

@@ -8,6 +8,10 @@ import (
 
 type None struct{}
 
+func (e *None) Start(ctx context.Context, indices []int) error {
+	return nil
+}
+
 func (e *None) Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error) {
 	return nil, false, nil
 }
