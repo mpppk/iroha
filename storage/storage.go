@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 
@@ -9,8 +10,8 @@ import (
 )
 
 type Storage interface {
-	Set(indices []int, wordsList [][]*ktkn.Word) error
-	Get(indices []int) ([][]*ktkn.Word, bool, error)
+	Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error
+	Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error)
 }
 
 func toStorageStrKey(indices []int) string {

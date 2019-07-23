@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"math/bits"
 
@@ -95,6 +96,7 @@ func (i *Iroha) gf(word *ktkn.Word, usedIndices []int, katakanaBitsAndWords []*k
 }
 
 func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*ktkn.KatakanaBitsAndWords, remainKatakanaBits ktkn.WordBits) ([][]*ktkn.Word, bool, error) {
+	ctx := context.Background()
 	remainKatakanaNum := bits.OnesCount64(uint64(remainKatakanaBits))
 	if remainKatakanaNum == int(ktkn.KatakanaLen) {
 		return [][]*ktkn.Word{{}}, true, nil
@@ -112,7 +114,7 @@ func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*ktkn.Kat
 	depth := int(ktkn.KatakanaLen) - len(katakanaBitsAndWords) - 1
 
 	if depth <= i.depths.MaxStorage {
-		if results, ok, err := i.storage.Get(usedIndices); err != nil {
+		if results, ok, err := i.storage.Get(ctx, usedIndices); err != nil {
 			return nil, false, err
 		} else if ok {
 			i.log.PrintProgressLog(depth, "cache used")
@@ -185,7 +187,7 @@ func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*ktkn.Kat
 
 	msg := ""
 	if depth <= i.depths.MaxStorage {
-		if err := i.storage.Set(usedIndices, irohaWordLists); err != nil {
+		if err := i.storage.Set(ctx, usedIndices, irohaWordLists); err != nil {
 			return nil, false, err
 		}
 		msg += "cache saved"

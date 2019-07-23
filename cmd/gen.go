@@ -53,8 +53,9 @@ var genCmd = &cobra.Command{
 		//panicIfErrorExists(err)
 		//memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
 		//iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
+		ctx := context.Background()
 		serviceAccountFilePath := "iroha-247312-5f9b1522fbd5.json"
-		firestoreStorage, err := storage.NewFireStore(context.Background(), serviceAccountFilePath, config.DBPath)
+		firestoreStorage, err := storage.NewFireStore(ctx, serviceAccountFilePath, config.DBPath)
 		panicIfErrorExists(err)
 		memoryStorage := storage.NewMemoryWithOtherStorage(firestoreStorage)
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)

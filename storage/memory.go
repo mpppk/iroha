@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"sync"
 
 	"github.com/mpppk/iroha/ktkn"
@@ -49,15 +50,15 @@ func NewMemoryWithOtherStorage(storage Storage) *Memory {
 	return m
 }
 
-func (m *Memory) Set(indices []int, wordsList [][]*ktkn.Word) error {
+func (m *Memory) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error {
 	m.cache.Set(toStorageStrKey(indices), wordsList)
-	return m.otherStorage.Set(indices, wordsList)
+	return m.otherStorage.Set(ctx, indices, wordsList)
 }
 
-func (m *Memory) Get(indices []int) ([][]*ktkn.Word, bool, error) {
+func (m *Memory) Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error) {
 	wordsList, ok := m.cache.Get(toStorageStrKey(indices))
 	if ok {
 		return wordsList, true, nil
 	}
-	return m.otherStorage.Get(indices)
+	return m.otherStorage.Get(ctx, indices)
 }

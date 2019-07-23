@@ -42,6 +42,7 @@ func NewFireStore(ctx context.Context, filePath string, rootCollectionName strin
 		StorageClass: "STANDARD",
 		Location:     "asia-northeast1",
 	}
+	// FIXME projectId
 	bucketClient, err := newCloudStorageClient(ctx, app, "iroha-247312", rootCollectionName, bucketAttrs)
 	if err != nil {
 		return nil, errors.Wrap(err, baseErrMsg+"failed to create bucket client")
@@ -58,8 +59,7 @@ func NewFireStore(ctx context.Context, filePath string, rootCollectionName strin
 	}, errors.Wrap(err, baseErrMsg+"failed to close firestore client")
 }
 
-func (f *FireStore) Set(indices []int, wordsList [][]*ktkn.Word) error {
-	ctx := context.Background()
+func (f *FireStore) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error {
 	wl := wordsList
 	if wl == nil {
 		wl = make([][]*ktkn.Word, 0)
@@ -77,7 +77,6 @@ func (f *FireStore) Set(indices []int, wordsList [][]*ktkn.Word) error {
 	return nil
 }
 
-func (f *FireStore) Get(indices []int) ([][]*ktkn.Word, bool, error) {
-	ctx := context.Background()
+func (f *FireStore) Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error) {
 	return f.cstorageClient.Get(ctx, indices)
 }
