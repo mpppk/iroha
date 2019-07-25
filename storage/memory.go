@@ -50,6 +50,10 @@ func NewMemoryWithOtherStorage(storage Storage) *Memory {
 	return m
 }
 
+func (m *Memory) ResetProgress(ctx context.Context) error {
+	return m.otherStorage.ResetProgress(ctx)
+}
+
 func (m *Memory) Start(ctx context.Context, indices []int) error {
 	return m.otherStorage.Start(ctx, indices)
 }

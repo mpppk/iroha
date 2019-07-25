@@ -15,6 +15,7 @@ var progressDone = 2
 
 type Storage interface {
 	Start(ctx context.Context, indices []int) error
+	ResetProgress(ctx context.Context) error
 	Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error
 	Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error)
 }

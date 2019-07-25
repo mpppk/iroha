@@ -24,6 +24,7 @@ type FlagKeys struct {
 	MaxParallelDepth string
 	MaxStorageDepth  string
 	OutputMode       string
+	ResetProgress    string
 }
 
 func NewFlagKeys() *FlagKeys {
@@ -36,15 +37,17 @@ func NewFlagKeys() *FlagKeys {
 		MaxParallelDepth: "max-p-depth",
 		MaxStorageDepth:  "max-s-depth",
 		OutputMode:       "output-mode",
+		ResetProgress:    "reset-progress",
 	}
 }
 
 type Config struct {
-	FilePath     string
-	DBPath       string
-	ColName      string
-	DepthOptions *lib.DepthOptions
-	OutputMode   OutputMode
+	FilePath      string
+	DBPath        string
+	ColName       string
+	DepthOptions  *lib.DepthOptions
+	OutputMode    OutputMode
+	ResetProgress bool
 }
 
 func NewConfigFromViper() *Config {
@@ -59,7 +62,8 @@ func NewConfigFromViper() *Config {
 			MaxLog:      viper.GetInt(flagKeys.MaxLogDepth),
 			MaxStorage:  viper.GetInt(flagKeys.MaxStorageDepth),
 		},
-		OutputMode: OutputMode(viper.GetString(flagKeys.OutputMode)),
+		OutputMode:    OutputMode(viper.GetString(flagKeys.OutputMode)),
+		ResetProgress: viper.GetBool(flagKeys.ResetProgress),
 	}
 }
 

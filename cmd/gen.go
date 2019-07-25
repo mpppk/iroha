@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"strconv"
 	"strings"
@@ -62,6 +63,14 @@ var genCmd = &cobra.Command{
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
+
+		if config.ResetProgress {
+			log.Println("progress is reset")
+			if err := firestoreStorage.ResetProgress(ctx); err != nil {
+				panic(err)
+			}
+		}
+
 		rowIndicesList, err := iroha.Search()
 		panicIfErrorExists(err)
 
@@ -138,6 +147,10 @@ func init() {
 	}
 	genCmd.Flags().String(flagKeys.OutputMode, "pretty", "Output mode(pretty,indices,none)")
 	if err := viper.BindPFlag(flagKeys.OutputMode, genCmd.Flags().Lookup(flagKeys.OutputMode)); err != nil {
+		panic(err)
+	}
+	genCmd.Flags().Bool(flagKeys.ResetProgress, false, "Ignore PROCESSING progress")
+	if err := viper.BindPFlag(flagKeys.ResetProgress, genCmd.Flags().Lookup(flagKeys.ResetProgress)); err != nil {
 		panic(err)
 	}
 	if err := registerIntToFlags(genCmd, flagKeys.MinParallelDepth, -1, "min depth"); err != nil {

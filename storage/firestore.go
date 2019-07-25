@@ -82,8 +82,29 @@ func (f *FireStore) getProgress(ctx context.Context, indices []int) (int, error)
 	return int(progress), nil
 }
 
+func (f *FireStore) removeProgressByState(ctx context.Context, progress int) error {
+	query := f.client.Collection(f.rootCollectionName).Where("Progress", "==", progressProcessing)
+	docs, err := query.Documents(ctx).GetAll()
+	if err != nil {
+		return err
+	}
+
+	batch := f.client.Batch()
+	for _, doc := range docs {
+		batch.Delete(doc.Ref)
+	}
+	if _, err := batch.Commit(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (f *FireStore) Start(ctx context.Context, indices []int) error {
 	return f.updateProgress(ctx, indices, progressProcessing)
+}
+
+func (f *FireStore) ResetProgress(ctx context.Context) error {
+	return f.removeProgressByState(ctx, progressProcessing)
 }
 
 func (f *FireStore) updateProgress(ctx context.Context, indices []int, progress int) error {
