@@ -16,29 +16,38 @@ var NoneOutputMode OutputMode = "none"
 
 type OutputMode string
 type FlagKeys struct {
-	File             string
-	DBPath           string
-	ColName          string
-	MinParallelDepth string
-	MaxLogDepth      string
-	MaxParallelDepth string
-	MaxStorageDepth  string
-	OutputMode       string
-	ResetProgress    string
+	File               string
+	DBPath             string
+	ColName            string
+	MinParallelDepth   string
+	MaxLogDepth        string
+	MaxParallelDepth   string
+	MaxStorageDepth    string
+	OutputMode         string
+	ResetProgress      string
+	GCPProjectId       string
+	GCPCredentialsPath string
 }
 
 func NewFlagKeys() *FlagKeys {
 	return &FlagKeys{
-		File:             "file",
-		DBPath:           "db-path",
-		ColName:          "col",
-		MinParallelDepth: "min-p-depth",
-		MaxLogDepth:      "max-log-depth",
-		MaxParallelDepth: "max-p-depth",
-		MaxStorageDepth:  "max-s-depth",
-		OutputMode:       "output-mode",
-		ResetProgress:    "reset-progress",
+		File:               "file",
+		DBPath:             "db-path",
+		ColName:            "col",
+		MinParallelDepth:   "min-p-depth",
+		MaxLogDepth:        "max-log-depth",
+		MaxParallelDepth:   "max-p-depth",
+		MaxStorageDepth:    "max-s-depth",
+		OutputMode:         "output-mode",
+		ResetProgress:      "reset-progress",
+		GCPProjectId:       "gcp-project-id",
+		GCPCredentialsPath: "gcp-credentials-path",
 	}
+}
+
+type GCPConfig struct {
+	ProjectId       string
+	CredentialsPath string
 }
 
 type Config struct {
@@ -48,6 +57,7 @@ type Config struct {
 	DepthOptions  *lib.DepthOptions
 	OutputMode    OutputMode
 	ResetProgress bool
+	GCP           *GCPConfig
 }
 
 func NewConfigFromViper() *Config {
@@ -64,6 +74,10 @@ func NewConfigFromViper() *Config {
 		},
 		OutputMode:    OutputMode(viper.GetString(flagKeys.OutputMode)),
 		ResetProgress: viper.GetBool(flagKeys.ResetProgress),
+		GCP: &GCPConfig{
+			ProjectId:       viper.GetString(flagKeys.GCPProjectId),
+			CredentialsPath: viper.GetString(flagKeys.GCPCredentialsPath),
+		},
 	}
 }
 

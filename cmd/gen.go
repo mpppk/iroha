@@ -55,9 +55,7 @@ var genCmd = &cobra.Command{
 		//memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
 		//iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		ctx := context.Background()
-		serviceAccountFilePath := "iroha-247312-5f9b1522fbd5.json"
-		// FIXME projectID
-		firestoreStorage, err := storage.NewFireStore(ctx, serviceAccountFilePath, config.DBPath, "iroha-247312")
+		firestoreStorage, err := storage.NewFireStore(ctx, config.GCP.CredentialsPath, config.DBPath, config.GCP.ProjectId)
 		panicIfErrorExists(err)
 		memoryStorage := storage.NewMemoryWithOtherStorage(firestoreStorage)
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
@@ -151,6 +149,14 @@ func init() {
 	}
 	genCmd.Flags().Bool(flagKeys.ResetProgress, false, "Ignore PROCESSING progress")
 	if err := viper.BindPFlag(flagKeys.ResetProgress, genCmd.Flags().Lookup(flagKeys.ResetProgress)); err != nil {
+		panic(err)
+	}
+	genCmd.Flags().String(flagKeys.GCPProjectId, "", "GCP Project ID")
+	if err := viper.BindPFlag(flagKeys.GCPProjectId, genCmd.Flags().Lookup(flagKeys.GCPProjectId)); err != nil {
+		panic(err)
+	}
+	genCmd.Flags().String(flagKeys.GCPCredentialsPath, "", "GCP credentials file path")
+	if err := viper.BindPFlag(flagKeys.GCPCredentialsPath, genCmd.Flags().Lookup(flagKeys.GCPCredentialsPath)); err != nil {
 		panic(err)
 	}
 	if err := registerIntToFlags(genCmd, flagKeys.MinParallelDepth, -1, "min depth"); err != nil {
