@@ -2,6 +2,7 @@ package storage
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -17,7 +18,7 @@ type Bolt struct {
 	bucketName string
 }
 
-func NewBolt(dbPath string) (*Bolt, error) {
+func NewBolt(dbPath string) (Storage, error) {
 	db, err := bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		return nil, err
@@ -30,7 +31,7 @@ func NewBolt(dbPath string) (*Bolt, error) {
 	return boltStorage, err
 }
 
-func (b *Bolt) Get(indices []int) (wordsList [][]*ktkn.Word, ok bool, err error) {
+func (b *Bolt) Get(ctx context.Context, indices []int) (wordsList [][]*ktkn.Word, ok bool, err error) {
 	wordsList = make([][]*ktkn.Word, 0, 10)
 	err = b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(b.bucketName))
@@ -48,7 +49,7 @@ func (b *Bolt) Get(indices []int) (wordsList [][]*ktkn.Word, ok bool, err error)
 	return
 }
 
-func (b *Bolt) Set(indices []int, wordsList [][]*ktkn.Word) error {
+func (b *Bolt) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word) error {
 	wl := wordsList
 	if wl == nil {
 		wl = make([][]*ktkn.Word, 0)

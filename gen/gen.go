@@ -5,16 +5,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/mpppk/iroha/storage"
+
 	"github.com/mpppk/iroha/lib"
 
 	"github.com/spf13/viper"
 )
 
+type OutputMode string
+
 var PrettyOutputMode OutputMode = "pretty"
 var IndicesOutputMode OutputMode = "indices"
 var NoneOutputMode OutputMode = "none"
 
-type OutputMode string
 type FlagKeys struct {
 	File               string
 	DBPath             string
@@ -23,6 +26,7 @@ type FlagKeys struct {
 	MaxLogDepth        string
 	MaxParallelDepth   string
 	MaxStorageDepth    string
+	Storage            string
 	OutputMode         string
 	ResetProgress      string
 	GCPProjectId       string
@@ -38,6 +42,7 @@ func NewFlagKeys() *FlagKeys {
 		MaxLogDepth:        "max-log-depth",
 		MaxParallelDepth:   "max-p-depth",
 		MaxStorageDepth:    "max-s-depth",
+		Storage:            "storage",
 		OutputMode:         "output-mode",
 		ResetProgress:      "reset-progress",
 		GCPProjectId:       "gcp-project-id",
@@ -57,6 +62,7 @@ type Config struct {
 	DepthOptions  *lib.DepthOptions
 	OutputMode    OutputMode
 	ResetProgress bool
+	Storage       storage.Type
 	GCP           *GCPConfig
 }
 
@@ -73,6 +79,7 @@ func NewConfigFromViper() *Config {
 			MaxStorage:  viper.GetInt(flagKeys.MaxStorageDepth),
 		},
 		OutputMode:    OutputMode(viper.GetString(flagKeys.OutputMode)),
+		Storage:       storage.Type(viper.GetString(flagKeys.Storage)),
 		ResetProgress: viper.GetBool(flagKeys.ResetProgress),
 		GCP: &GCPConfig{
 			ProjectId:       viper.GetString(flagKeys.GCPProjectId),
@@ -81,14 +88,44 @@ func NewConfigFromViper() *Config {
 	}
 }
 
-func (c *Config) IsValid() bool {
-	return isValidOutputMode(c.OutputMode)
+func (c *Config) IsValid() error {
+	if !isValidOutputMode(c.OutputMode) {
+		return fmt.Errorf("invalid output mode was given. provided string: %s", c.OutputMode)
+	}
+	if !isValidStorageType(c.Storage) {
+		return fmt.Errorf("invalid storage type was given. provided string: %s", c.Storage)
+	}
+	return nil
+}
+
+func (c *Config) IsValidGCPConfig() error {
+	// if storage type is GCP, and GCP config file or project is does not specified
+	if c.Storage != storage.GCPType {
+		// FIXME: print warning if gcp config is provided.
+		return nil
+	}
+	if c.GCP.ProjectId == "" {
+		return fmt.Errorf("even though storage type is set to 'GCP', GCP project ID is not provided")
+	}
+	if c.GCP.CredentialsPath == "" {
+		return fmt.Errorf("even though storage type is set to 'GCP', GCP credentials path is not provided")
+	}
+	return nil
 }
 
 func isValidOutputMode(mode OutputMode) bool {
 	return mode == PrettyOutputMode ||
 		mode == IndicesOutputMode ||
 		mode == NoneOutputMode
+}
+
+func isValidStorageType(storageType storage.Type) bool {
+	for _, st := range storage.GetStorageTypes() {
+		if st == storageType {
+			return true
+		}
+	}
+	return false
 }
 
 func PrintAsPretty(records [][]string, rowIndicesList [][]int) {

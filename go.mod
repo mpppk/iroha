@@ -18,5 +18,6 @@ require (
 	github.com/spf13/viper v1.4.0
 	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
+	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 	google.golang.org/api v0.7.0
 )

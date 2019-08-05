@@ -20,6 +20,20 @@ type Storage interface {
 	Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error)
 }
 
+type Type string
+
+var MemoryType Type = "memory"
+var BoltType Type = "bolt"
+var GCPType Type = "gcp"
+
+func GetStorageTypes() []Type {
+	return []Type{
+		MemoryType,
+		BoltType,
+		GCPType,
+	}
+}
+
 func toStorageStrKey(indices []int) string {
 	strKey := ""
 	if len(indices) == 0 {

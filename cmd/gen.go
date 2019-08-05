@@ -26,7 +26,7 @@ var genCmd = &cobra.Command{
 	Long:  ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		config := gen.NewConfigFromViper()
-		if !config.IsValid() {
+		if err := config.IsValid(); err != nil {
 			FprintlnOrPanic(os.Stderr, "invalid config:", *config)
 			os.Exit(1)
 		}
@@ -50,21 +50,36 @@ var genCmd = &cobra.Command{
 			words = append(words, record[colIndex])
 		}
 
-		//boltStorage, err := storage.NewBolt(config.DBPath)
-		//panicIfErrorExists(err)
-		//memoryStorage := storage.NewMemoryWithOtherStorage(boltStorage)
-		//iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		ctx := context.Background()
-		firestoreStorage, err := storage.NewFireStore(ctx, config.GCP.CredentialsPath, config.DBPath, config.GCP.ProjectId)
-		panicIfErrorExists(err)
-		memoryStorage := storage.NewMemoryWithOtherStorage(firestoreStorage)
+		var store storage.Storage
+		switch config.Storage {
+		case storage.MemoryType:
+			store = storage.NewMemory()
+		case storage.BoltType:
+			s, err := storage.NewBolt(config.DBPath)
+			if err != nil {
+				panic(err)
+			}
+			store = s
+		case storage.GCPType:
+			s, err := storage.NewFireStore(ctx, config.GCP.CredentialsPath, config.DBPath, config.GCP.ProjectId)
+			if err != nil {
+				panic(err)
+			}
+			store = s
+		}
+		if store == nil {
+			panic("invalid storage type: " + config.Storage)
+		}
+
+		memoryStorage := storage.NewMemoryWithOtherStorage(store)
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
 		iroha.PrintWordCountMap()
 		iroha.PrintWordByKatakanaMap()
 
 		if config.ResetProgress {
 			log.Println("progress is reset")
-			if err := firestoreStorage.ResetProgress(ctx); err != nil {
+			if err := memoryStorage.ResetProgress(ctx); err != nil {
 				panic(err)
 			}
 		}
@@ -157,6 +172,10 @@ func init() {
 	}
 	genCmd.Flags().String(flagKeys.GCPCredentialsPath, "", "GCP credentials file path")
 	if err := viper.BindPFlag(flagKeys.GCPCredentialsPath, genCmd.Flags().Lookup(flagKeys.GCPCredentialsPath)); err != nil {
+		panic(err)
+	}
+	genCmd.Flags().String(flagKeys.Storage, string(storage.MemoryType), fmt.Sprintf("Storage type (%s, %s, %s)", storage.MemoryType, storage.BoltType, storage.GCPType))
+	if err := viper.BindPFlag(flagKeys.Storage, genCmd.Flags().Lookup(flagKeys.Storage)); err != nil {
 		panic(err)
 	}
 	if err := registerIntToFlags(genCmd, flagKeys.MinParallelDepth, -1, "min depth"); err != nil {
