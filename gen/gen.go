@@ -95,6 +95,11 @@ func (c *Config) IsValid() error {
 	if !isValidStorageType(c.Storage) {
 		return fmt.Errorf("invalid storage type was given. provided string: %s", c.Storage)
 	}
+
+	if c.Storage == storage.MemoryType && c.DBPath != "" {
+		return fmt.Errorf("db-path cant be specified if memory storage is used")
+	}
+
 	return nil
 }
 
