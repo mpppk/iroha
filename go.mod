@@ -3,7 +3,7 @@ module github.com/mpppk/iroha
 go 1.12
 
 require (
-	cloud.google.com/go v0.38.0
+	cloud.google.com/go v0.43.0
 	firebase.google.com/go v3.9.0+incompatible
 	github.com/blang/semver v3.6.1+incompatible
 	github.com/googleapis/gax-go v1.0.3 // indirect
@@ -16,7 +16,6 @@ require (
 	github.com/rhysd/go-github-selfupdate v1.1.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
-	go.opencensus.io v0.22.0 // indirect
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7 // indirect
 	google.golang.org/api v0.7.0
