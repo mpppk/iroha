@@ -65,7 +65,7 @@ func (b *Bolt) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.Word)
 		err := b.Put(
 			toStorageKey(indices),
 			wordsListJsonBytes)
-		return errors.Wrapf(err, "failed to put wordsList to bolt DB: indices:%s", indices)
+		return errors.Wrapf(err, "failed to put wordsList to bolt DB: indices:%v", indices)
 	})
 	if err != nil {
 		return err

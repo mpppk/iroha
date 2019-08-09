@@ -70,7 +70,7 @@ func (b *CloudStorageClient) SaveWordsList(ctx context.Context, indices []int, w
 func (b *CloudStorageClient) Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error) {
 	reader, ok, err := b.getObjectReader(ctx, indices)
 	if err != nil {
-		return nil, false, errors.Wrapf(err, "failed to get cache from cloud storage. indices: %s", indices)
+		return nil, false, errors.Wrapf(err, "failed to get cache from cloud storage. indices: %v", indices)
 	}
 	if !ok {
 		return nil, false, nil
