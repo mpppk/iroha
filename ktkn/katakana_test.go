@@ -3,8 +3,6 @@ package ktkn
 import (
 	"reflect"
 	"testing"
-
-	"github.com/k0kubun/pp"
 )
 
 func TestNewKatakana(t *testing.T) {
@@ -49,7 +47,7 @@ func TestNewKatakana(t *testing.T) {
 		for katakanaBits, words := range wordByKatakanaMap {
 			if katakanaBits == targetKatakanaBits {
 				for _, word := range words {
-					if Bits == targetWordBits {
+					if word.Bits == targetWordBits {
 						return true
 					}
 				}
@@ -61,13 +59,13 @@ func TestNewKatakana(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			katakana := NewKatakana(tt.args.words)
-			if !reflect.DeepEqual(wordCountMap, wordCountMap) {
-				t.Errorf("wordCountMap() = %v, want %v", wordCountMap, wordCountMap)
+			if !reflect.DeepEqual(katakana.wordCountMap, katakana.wordCountMap) {
+				t.Errorf("wordCountMap() = %v, want %v", katakana.wordCountMap, katakana.wordCountMap)
 			}
-			for katakanaBits, words := range wordByKatakanaMap {
+			for katakanaBits, words := range katakana.wordByKatakanaMap {
 				for _, word := range words {
-					if !contains(wordByKatakanaMap, katakanaBits, Bits) {
-						t.Errorf("wordByKatakanaMap() = %v, want %v", wordByKatakanaMap, wordByKatakanaMap)
+					if !contains(katakana.wordByKatakanaMap, katakanaBits, word.Bits) {
+						t.Errorf("wordByKatakanaMap() = %v, want %v", katakana.wordByKatakanaMap, katakana.wordByKatakanaMap)
 					}
 				}
 			}
@@ -141,9 +139,9 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 
 	contains := func(list []*KatakanaBitsAndWords, v *KatakanaBitsAndWords) bool {
 		for _, nv := range list {
-			if KatakanaBits == KatakanaBits {
+			if nv.KatakanaBits == v.KatakanaBits {
 				// FIXME
-				if len(Words) == 0 && len(Words) == 0 {
+				if len(v.Words) == 0 && len(nv.Words) == 0 {
 					return true
 				}
 				return reflect.DeepEqual(*nv, *v)
@@ -160,10 +158,9 @@ func TestKatakana_ToSortedKatakanaAndWordBits(t *testing.T) {
 				wordCountMap:      tt.fields.wordCountMap,
 			}
 
-			gotKatakanaAndWordBitsList := ListSortedKatakanaBitsAndWords()
+			gotKatakanaAndWordBitsList := k.ListSortedKatakanaBitsAndWords()
 			for _, want := range tt.wantKatakanaAndWordBitsList {
 				if !contains(gotKatakanaAndWordBitsList, want) {
-					pp.Println(gotKatakanaAndWordBitsList)
 					t.Errorf("KatakanaAndWordBitsList = %v, should contains %v", gotKatakanaAndWordBitsList, want)
 				}
 			}

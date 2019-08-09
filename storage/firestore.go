@@ -111,7 +111,7 @@ func (f *FireStore) updateProgress(ctx context.Context, indices []int, progress 
 	doc := &cacheDoc{Progress: progress}
 	_, err := f.client.Collection(f.rootCollectionName).Doc(toStorageStrKey(indices)).Set(ctx, doc)
 	if err != nil {
-		return errors.Wrapf(err, "failed to update progress on firestore. indices: %s", indices)
+		return errors.Wrapf(err, "failed to update progress on firestore. indices: %v", indices)
 	}
 	return nil
 }

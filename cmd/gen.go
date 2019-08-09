@@ -27,7 +27,7 @@ var genCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		config := gen.NewConfigFromViper()
 		if err := config.IsValid(); err != nil {
-			FprintlnOrPanic(os.Stderr, "invalid config:", *config)
+			FprintfOrPanic(os.Stderr, "invalid config: %#v: %s", *config, err)
 			os.Exit(1)
 		}
 
