@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.38.0
-	firebase.google.com/go v3.8.1+incompatible
+	firebase.google.com/go v3.9.0+incompatible
 	github.com/blang/semver v3.6.1+incompatible
 	github.com/googleapis/gax-go v2.0.2+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
