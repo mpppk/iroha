@@ -13,5 +13,5 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	google.golang.org/api v0.7.0
+	google.golang.org/api v0.8.0
 )
