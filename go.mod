@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	cloud.google.com/go v0.44.1
-	firebase.google.com/go v3.9.0+incompatible
+	firebase.google.com/go v3.10.0+incompatible
 	github.com/blang/semver v3.6.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mpppk/bbolt v1.3.3
