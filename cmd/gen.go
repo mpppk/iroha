@@ -74,8 +74,6 @@ var genCmd = &cobra.Command{
 
 		memoryStorage := storage.NewMemoryWithOtherStorage(store)
 		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
-		iroha.PrintWordCountMap()
-		iroha.PrintWordByKatakanaMap()
 
 		if config.ResetProgress {
 			log.Println("progress is reset")
