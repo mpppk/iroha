@@ -3,3 +3,7 @@ vendor/
 .vendor-new/
 .DS_Store
 *.json
+data/
+*.db
+iroha
+results
