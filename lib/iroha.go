@@ -132,7 +132,7 @@ func (i *Iroha) searchByBits(usedIndices []int, katakanaBitsAndWords []*ktkn.Kat
 	goroutineMode := depth >= i.depths.MinParallel && depth <= i.depths.MaxParallel
 	if goroutineMode {
 		eg := errgroup.Group{}
-		wordListChan := make(chan []*ktkn.Word, 100)
+		wordListChan := make(chan []*ktkn.Word, 1000000)
 		for index, word := range katakanaAndWordBits.Words {
 			gWord := word
 			newIndices := generateNewUsedIndices(usedIndices, index)

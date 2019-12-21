@@ -72,12 +72,11 @@ var genCmd = &cobra.Command{
 			panic("invalid storage type: " + config.Storage)
 		}
 
-		memoryStorage := storage.NewMemoryWithOtherStorage(store)
-		iroha := lib.NewIroha(words, memoryStorage, config.DepthOptions)
+		iroha := lib.NewIroha(words, store, config.DepthOptions)
 
 		if config.ResetProgress {
 			log.Println("progress is reset")
-			if err := memoryStorage.ResetProgress(ctx); err != nil {
+			if err := store.ResetProgress(ctx); err != nil {
 				panic(err)
 			}
 		}

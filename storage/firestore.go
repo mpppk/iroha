@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"time"
 
 	cstorage "cloud.google.com/go/storage"
 
@@ -100,7 +99,7 @@ func (f *FireStore) removeProgressByState(ctx context.Context, progress int) err
 }
 
 func (f *FireStore) Start(ctx context.Context, indices []int) error {
-	return f.updateProgress(ctx, indices, progressProcessing)
+	return nil
 }
 
 func (f *FireStore) ResetProgress(ctx context.Context) error {
@@ -125,31 +124,9 @@ func (f *FireStore) Set(ctx context.Context, indices []int, wordsList [][]*ktkn.
 	if err := f.cstorageClient.SaveWordsList(ctx, indices, wordsList); err != nil {
 		return errors.Wrap(err, "failed to set wordsList to cloud storage")
 	}
-	if err := f.updateProgress(ctx, indices, progressDone); err != nil {
-		return errors.Wrap(err, "failed to update progress to done")
-	}
-
 	return nil
 }
 
 func (f *FireStore) Get(ctx context.Context, indices []int) ([][]*ktkn.Word, bool, error) {
-L:
-	for {
-		// FIXME: watch document
-		progress, err := f.getProgress(ctx, indices)
-		if err != nil {
-			return nil, false, err
-		}
-
-		switch progress {
-		case progressNotStarted:
-			return nil, false, nil
-		case progressDone:
-			break L
-		case progressProcessing:
-			time.Sleep(500 * time.Millisecond)
-		}
-	}
-
 	return f.cstorageClient.Get(ctx, indices)
 }
