@@ -3,7 +3,7 @@ module github.com/mpppk/iroha
 go 1.12
 
 require (
-	cloud.google.com/go v0.50.0
+	cloud.google.com/go v0.51.0
 	cloud.google.com/go/firestore v1.1.0
 	cloud.google.com/go/storage v1.0.0
 	firebase.google.com/go v3.11.1+incompatible
