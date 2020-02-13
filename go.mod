@@ -3,9 +3,9 @@ module github.com/mpppk/iroha
 go 1.12
 
 require (
-	cloud.google.com/go v0.52.0
+	cloud.google.com/go v0.53.0
 	cloud.google.com/go/firestore v1.1.0
-	cloud.google.com/go/storage v1.0.0
+	cloud.google.com/go/storage v1.5.0
 	firebase.google.com/go v3.12.0+incompatible
 	github.com/blang/semver v3.6.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
