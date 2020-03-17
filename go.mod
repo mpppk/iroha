@@ -14,6 +14,6 @@ require (
 	github.com/rhysd/go-github-selfupdate v1.2.1
 	github.com/spf13/cobra v0.0.6
 	github.com/spf13/viper v1.6.2
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
+	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
 	google.golang.org/api v0.20.0
 )
