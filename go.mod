@@ -11,7 +11,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mpppk/bbolt v1.3.3
 	github.com/pkg/errors v0.9.1
-	github.com/rhysd/go-github-selfupdate v1.2.1
+	github.com/rhysd/go-github-selfupdate v1.2.2
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/viper v1.6.3
 	golang.org/x/sync v0.0.0-20200317015054-43a5402ce75a
