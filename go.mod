@@ -7,7 +7,7 @@ require (
 	cloud.google.com/go/firestore v1.1.0
 	cloud.google.com/go/storage v1.8.0
 	firebase.google.com/go v3.13.0+incompatible
-	github.com/blang/semver v3.8.0+incompatible
+	github.com/blang/semver/v4 v4.0.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
 	github.com/hashicorp/golang-lru v0.5.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
