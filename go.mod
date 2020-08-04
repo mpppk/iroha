@@ -18,6 +18,5 @@ require (
 	github.com/spf13/viper v1.7.1
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	google.golang.org/api v0.29.0
-	google.golang.org/appengine v1.6.6 // indirect
+	google.golang.org/api v0.30.0
 )
