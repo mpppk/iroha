@@ -18,6 +18,6 @@ require (
 	github.com/spf13/viper v1.7.1
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
-	google.golang.org/api v0.34.0
+	google.golang.org/api v0.35.0
 	google.golang.org/protobuf v1.25.0 // indirect
 )
