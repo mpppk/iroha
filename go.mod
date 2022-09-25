@@ -1,6 +1,6 @@
 module github.com/mpppk/iroha
 
-go 1.12
+go 1.19
 
 require (
 	cloud.google.com/go v0.86.0
