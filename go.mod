@@ -16,6 +16,6 @@ require (
 	github.com/spf13/cobra v0.0.7
 	github.com/spf13/viper v1.8.1
 	golang.org/x/exp v0.0.0-20200224162631-6cc2880d07d6 // indirect
-	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sync v0.8.0
 	google.golang.org/api v0.50.0
 )
